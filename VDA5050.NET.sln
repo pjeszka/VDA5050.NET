@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VDA5050.NET", "VDA5050.NET\VDA5050.NET.csproj", "{DFFF816B-6392-4AA8-9AD4-E5D3EF8FEAAE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DFFF816B-6392-4AA8-9AD4-E5D3EF8FEAAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFFF816B-6392-4AA8-9AD4-E5D3EF8FEAAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFFF816B-6392-4AA8-9AD4-E5D3EF8FEAAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFFF816B-6392-4AA8-9AD4-E5D3EF8FEAAE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
