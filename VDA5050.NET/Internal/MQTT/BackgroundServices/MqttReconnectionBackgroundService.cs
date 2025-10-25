@@ -2,12 +2,12 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using VDA5050.NET.Internal.MQTT.Settings;
 using VDA5050.NET.Internal.VdaDomain.Robots;
+using VDA5050.NET.Public.DependencyInjection.Settings;
 
 namespace VDA5050.NET.Internal.MQTT.BackgroundServices;
 
-public sealed class MqttReconnectionBackgroundService : BackgroundService
+internal sealed class MqttReconnectionBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceScope;
     private readonly IMqttConnection _connection;
@@ -15,7 +15,7 @@ public sealed class MqttReconnectionBackgroundService : BackgroundService
     private readonly ILogger<MqttReconnectionBackgroundService> _logger;
     private readonly string _brokerAddress;
 
-    public MqttReconnectionBackgroundService(
+    internal MqttReconnectionBackgroundService(
         IMqttConnection connection,
         IOptions<MqttConnectionSettings> mqttConnectionSettings,
         ILogger<MqttReconnectionBackgroundService> logger,
@@ -39,7 +39,7 @@ public sealed class MqttReconnectionBackgroundService : BackgroundService
                 {
                     using var scope = _serviceScope.CreateScope();
                     var robotRepository = scope.ServiceProvider
-                        .GetRequiredService<IRobotRepository>();
+                        .GetRequiredService<IConnectedRobotRepository>();
                     var robots = robotRepository
                         .GetRobotNames();
                     foreach (var robot in robots)

@@ -23,7 +23,7 @@ public sealed class MessageDispatcher : IMessageDispatcher
         var messageObject = JObject.Parse(message);
         using var scope = _serviceProvider.CreateScope();
         
-        var robotRepository = scope.ServiceProvider.GetRequiredService<IRobotRepository>();
+        var robotRepository = scope.ServiceProvider.GetRequiredService<IConnectedRobotRepository>();
         
         //var topicMapper = robotRepository.GetTopicsForRobot()
     }

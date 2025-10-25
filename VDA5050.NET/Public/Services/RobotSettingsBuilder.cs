@@ -18,8 +18,8 @@ public sealed class RobotSettingsBuilder
         return this;
     }
 
-    public RobotSettings Build(RobotNetworkName robotNetworkName)
+    public RobotSettings Build(RobotSerialNumber robotSerialNumber)
     {
-        return _settings with { RobotNetworkName = robotNetworkName };
+        return _settings with { RobotSerialNumber = robotSerialNumber };
     }
 }

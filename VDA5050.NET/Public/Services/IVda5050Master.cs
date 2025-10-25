@@ -5,10 +5,24 @@ namespace VDA5050.NET.Public.Services;
 
 public interface IVda5050Master
 {
-    Task AddRobot(RobotSettings robotSettings);
-    Task RemoveRobot(RobotNetworkName robotNetworkName);
+    // robot discovery
+    Task<ICollection<RobotSerialNumber>> GetAccessibleRobots();
+    
+    // robot management
+    Task<ICollection<RobotSerialNumber>> GetConnectedRobots();
+    Task ConnectRobot(RobotSettings robotSettings);
+    Task DisconnectRobot(RobotSerialNumber robotSerialNumber);
+    
+    // robot state observing
     event EventHandler<RobotStateChangedEvent> RobotStateChanged;
-
+    // robot visualization
+    // TODO: implement
+    
+    // ordering
     Task SendRobotOrder(RobotOrder robotOrder);
     Task UpdateRobotOrder();
+    event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;
+    
+    // instantActions
+    Task RequestInstantAction();
 }

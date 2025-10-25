@@ -3,40 +3,58 @@ using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
-using VDA5050.NET.Internal.MQTT.Settings;
+using VDA5050.NET.Internal.MQTT.Topics;
+using VDA5050.NET.Public.DependencyInjection.Settings;
 
 namespace VDA5050.NET.Internal.MQTT;
 
 public sealed class MqttConnection : IMqttConnection
 {
-    private const string ClientId = "triggers_mqtt";
+    private const string ClientId = "vda5050_master";
     private readonly IManagedMqttClient _client;
     private readonly ManagedMqttClientOptions _clientOptions;
     private readonly ILogger<MqttConnection>? _logger;
     private readonly List<string> _topics = new ();
+    private readonly ICollection<string> _initialTopics;
     private readonly IMessageDispatcher _messageDispatcher;
+    private readonly IInitialTopicsHandler _initialTopicsHandler;
 
     private bool _connectionRequested;
     private string? _connectionFailedErrorMessage;
     private DateTime? _lastConnectedAt;
 
     public MqttConnection(
-        IOptions<MqttConnectionSettings> connectionConfig,
+        Vda5050MasterSettings masterSettings,
         IMessageDispatcher messageDispatcher,
+        IInitialTopicsHandler initialTopicsHandler,
         ILogger<MqttConnection>? logger = null)
     {
         _messageDispatcher = messageDispatcher;
+        _initialTopicsHandler = initialTopicsHandler;
         _logger = logger;
 
         var mqttFactory = new MqttFactory();
         _client = mqttFactory.CreateManagedMqttClient();
+        _initialTopics = _initialTopicsHandler.GetInitialTopics();
 
-        var mqttClientOptions = new MqttClientOptionsBuilder()
+        var connectionConfig = masterSettings.Mqtt;
+
+        var mqttClientOptionsBuilder = new MqttClientOptionsBuilder()
             .WithCleanSession()
-            .WithTcpServer(connectionConfig.Value.BrokerAddress, connectionConfig.Value.Port)
-            .WithCredentials(connectionConfig.Value.Username, connectionConfig.Value.Password)
-            .WithClientId(ClientId)
-            .Build();
+            .WithTcpServer(connectionConfig.BrokerAddress, connectionConfig.Port);
+        
+        if (string.IsNullOrWhiteSpace(connectionConfig.Username) is false &&
+            string.IsNullOrWhiteSpace(connectionConfig.Password) is false)
+        {
+            mqttClientOptionsBuilder.WithCredentials(connectionConfig.Username, connectionConfig.Password);
+        }
+        
+        var clientId = string.IsNullOrWhiteSpace(connectionConfig.ClientId) is false ?
+            connectionConfig.ClientId :
+            ClientId;
+
+        mqttClientOptionsBuilder.WithClientId(clientId);
+        var mqttClientOptions = mqttClientOptionsBuilder.Build();
 
         _client.ApplicationMessageReceivedAsync += async messageArguments => await HandleMessage(messageArguments);
         _client.ConnectedAsync += HandleSuccessfulConnection;
@@ -100,6 +118,15 @@ public sealed class MqttConnection : IMqttConnection
         await _client.UnsubscribeAsync(topic);
         _topics.Remove(topic);
     }
+    
+    private async Task SubscribeToInitialTopics()
+    {
+        foreach (var initialTopic in _initialTopics)
+        {
+            await _client.SubscribeAsync(initialTopic);
+        }
+        
+    }
 
     private void ClearConnectionError()
     {
@@ -108,6 +135,7 @@ public sealed class MqttConnection : IMqttConnection
 
     private async Task SubscribeAllDefinedTopics()
     {
+        await SubscribeToInitialTopics();
         if (_topics.Any() is false)
         {
             return;
@@ -121,6 +149,14 @@ public sealed class MqttConnection : IMqttConnection
 
     private async Task HandleMessage(MqttApplicationMessageReceivedEventArgs arguments)
     {
+        if (HasSubscriber(arguments.ApplicationMessage.Topic) is false &&
+            _initialTopics.Any(x => arguments.ApplicationMessage.Topic.StartsWith(x)))
+        {
+            var initialMessageJson = arguments.ApplicationMessage.ConvertPayloadToString();
+            await _initialTopicsHandler.HandleInitialTopicMessage(arguments.ApplicationMessage.Topic, initialMessageJson);
+            return;
+        }
+
         var messageJson = arguments.ApplicationMessage.ConvertPayloadToString();
         await _messageDispatcher.DispatchMessage(arguments.ApplicationMessage.Topic, messageJson);
     }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <!-- NuGet metadata -->
@@ -27,9 +27,10 @@
 
     <ItemGroup>
       <PackageReference Include="FluentValidation" Version="10.4.0" />
-      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-      <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.1" />
       <PackageReference Include="MQTTnet" Version="4.2.1.781" />
       <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.1.781" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
@@ -37,6 +38,7 @@
 
     <ItemGroup>
       <Folder Include="Internal\" />
+      <Folder Include="Internal\MQTT\Settings\" />
     </ItemGroup>
 
 </Project>

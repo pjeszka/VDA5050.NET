@@ -2,17 +2,20 @@
 
 namespace VDA5050.NET.Internal.Messages;
 
-public class Header
+public abstract class Header
 {
-    [JsonPropertyName("interfaceName")]
-    public string InterfaceName { get; set; } = default!;
-
-    [JsonPropertyName("interfaceVersion")]
-    public string InterfaceVersion { get; set; } = default!;
-
-    [JsonPropertyName("sender")]
-    public Identity Sender { get; set; } = new();
+    [JsonPropertyName("headerId")]
+    public int HeaderId { get; set; } = default!;
 
     [JsonPropertyName("timestamp")]
-    public DateTime Timestamp { get; set; }
+    public string Timestamp { get; set; } = default!;
+
+    [JsonPropertyName("version")]
+    public string Version { get; set; }
+
+    [JsonPropertyName("manufacturer")]
+    public string Manufacturer { get; set; }
+    
+    [JsonPropertyName("serialNumber")]
+    public string SerialNumber { get; set; }
 }

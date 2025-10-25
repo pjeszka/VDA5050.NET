@@ -2,4 +2,4 @@
 
 namespace VDA5050.NET.Public.Models;
 
-public record RobotOrder(RobotNetworkName RobotNetworkName);
+public record RobotOrder(RobotSerialNumber RobotSerialNumber);
