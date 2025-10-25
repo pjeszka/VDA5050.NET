@@ -4,6 +4,25 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <!-- NuGet metadata -->
+        <PackageId>Jesho.VDA5050.NET</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Paweł Jeszka</Authors>
+        <Product>VDA5050.NET</Product>
+        <Company>Jesho</Company>
+        <Description>VDA5050 protocol .NET implementation for AGV communication</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/pjeszka/VDA5050.NET</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/pjeszka/VDA5050.NET.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>robotics;agv;warehouse;vda5050</PackageTags>
+        <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <IncludeSymbols>true</IncludeSymbols>
+        <IncludeSource>true</IncludeSource>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +33,10 @@
       <PackageReference Include="MQTTnet" Version="4.2.1.781" />
       <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.2.1.781" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Internal\" />
     </ItemGroup>
 
 </Project>
