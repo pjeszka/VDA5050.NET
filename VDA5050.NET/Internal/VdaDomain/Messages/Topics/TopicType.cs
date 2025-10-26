@@ -1,4 +1,4 @@
-﻿namespace VDA5050.NET.Internal.MQTT.Topics;
+﻿namespace VDA5050.NET.Internal.VdaDomain.Messages.Topics;
 
 public enum TopicType
 {

@@ -8,7 +8,6 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMqtt(this IServiceCollection serviceCollection)
     {
         serviceCollection
-            .AddSingleton<IMessageDispatcher, MessageDispatcher>()
             .AddSingleton<IMqttConnection, MqttConnection>()
             .AddHostedService<MqttReconnectionBackgroundService>();
         return serviceCollection;

@@ -6,6 +6,7 @@ using VDA5050.NET.Internal.Messages.Connection;
 using VDA5050.NET.Internal.MQTT.Topics;
 using VDA5050.NET.Public.DependencyInjection.Settings;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.RobotDiscovery;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
@@ -71,6 +72,7 @@ public sealed class RobotDiscoveryService : IInitialTopicsHandler
                 new DiscoveredRobot(
                     new RobotSerialNumber(connectionMessage.SerialNumber),
                     connectionMessage.Version,
+                    GetRobotTopicPrefix(topic),
                     connectionMessage.ConnectionState));
         }
         
@@ -85,5 +87,12 @@ public sealed class RobotDiscoveryService : IInitialTopicsHandler
         }
 
         return $"{prefix}/+/connection";
+    }
+    
+    private string GetRobotTopicPrefix(string topic)
+    {
+        var lastSlash = topic.LastIndexOf('/');
+        var result = lastSlash >= 0 ? topic[..lastSlash] : topic;
+        return result;
     }
 }

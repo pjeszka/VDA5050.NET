@@ -1,6 +1,9 @@
-﻿using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
+﻿using Microsoft.Extensions.Logging;
+using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.Robots;
+using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.RobotDiscovery;
 using VDA5050.NET.Public.Services;
 
 namespace VDA5050.NET.Internal.VdaDomain.Master;
@@ -8,15 +11,22 @@ namespace VDA5050.NET.Internal.VdaDomain.Master;
 public sealed class Vda5050Master : IVda5050Master
 {
     private readonly IDiscoveredRobotRepository _discoveredRobotRepository;
+    private readonly IOperationalRobotRepository _operationalRobotRepository;
+    private readonly ILogger<Vda5050Master> _logger;
 
-    public Vda5050Master(IDiscoveredRobotRepository discoveredRobotRepository)
+    public Vda5050Master(
+        IDiscoveredRobotRepository discoveredRobotRepository,
+        IOperationalRobotRepository operationalRobotRepository,
+        ILogger<Vda5050Master> logger)
     {
         _discoveredRobotRepository = discoveredRobotRepository;
+        _operationalRobotRepository = operationalRobotRepository;
+        _logger = logger;
     }
 
-    public Task<ICollection<RobotSerialNumber>> GetConnectedRobots()
+    public Task<ICollection<OperationalRobot>> GetOperationalRobots()
     {
-        throw new NotImplementedException();
+        return _operationalRobotRepository.GetRobots();
     }
 
     public Task<ICollection<DiscoveredRobot>> GetAccessibleRobots()
@@ -24,31 +34,77 @@ public sealed class Vda5050Master : IVda5050Master
         return Task.FromResult(_discoveredRobotRepository.GetDiscoveredRobots());
     }
 
-    public Task ConnectRobot(RobotSettings robotSettings)
+    public async Task StartRobotOperation(RobotSettings robotSettings)
     {
-        throw new NotImplementedException();
+        if (await _operationalRobotRepository.IsRobotOperational(robotSettings.RobotSerialNumber))
+        {
+            _logger.LogWarning("Robot {robotSerialNumber} is already connected.", robotSettings.RobotSerialNumber);
+            return;
+        }
+
+        var connectedRobot = new OperationalRobot(robotSettings, 
+            OnRobotConnectionStateChanged,
+            OnRobotStateChanged);
+        await _operationalRobotRepository.AddRobot(connectedRobot);
     }
 
-    public Task DisconnectRobot(RobotSerialNumber robotSerialNumber)
+    public async Task StopRobotOperation(RobotSerialNumber robotSerialNumber)
     {
-        throw new NotImplementedException();
+        if (await _operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
+        {
+            _logger.LogWarning("Robot {robotSerialNumber} is already disconnected.", robotSerialNumber);
+            return;
+        }
+        
+        await _operationalRobotRepository.RemoveRobot(robotSerialNumber);
+    }
+
+    public void AddRobotConnectionStateChangeHandler(EventHandler<RobotConnectionStateChangedEvent> robotConnectionStateChangedHandler)
+    {
+        RobotConnectionStateChanged += robotConnectionStateChangedHandler;
+    }
+
+    public event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
+
+    public void AddRobotStateChangeHandler(EventHandler<RobotStateChangedEvent> robotStateChangedHandler)
+    {
+        RobotStateChanged += robotStateChangedHandler;
     }
 
     public event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
-    public Task SendRobotOrder(RobotOrder robotOrder)
+    // public Task SendRobotOrder(RobotOrder robotOrder)
+    // {
+    //     throw new NotImplementedException();
+    // }
+    //
+    // public Task UpdateRobotOrder()
+    // {
+    //     throw new NotImplementedException();
+    // }
+    //
+    // public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
+    //
+    // public Task RequestInstantAction()
+    // {
+    //     throw new NotImplementedException();
+    // }
+    
+    private void OnRobotStateChanged(object? sender, RobotStateChangedEvent e)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation(
+            "Robot {robotSerialNumber} state changed to {state}",
+            e.RobotSerialNumber,
+            e.State);
+        RobotStateChanged?.Invoke(sender, e);
     }
 
-    public Task UpdateRobotOrder()
+    private void OnRobotConnectionStateChanged(object? sender, RobotConnectionStateChangedEvent e)
     {
-        throw new NotImplementedException();
-    }
-
-    public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
-
-    public Task RequestInstantAction()
-    {
-        throw new NotImplementedException();
+        _logger.LogInformation(
+            "Robot {robotSerialNumber} connection state changed from {previousConnectionState} to {newConnectionState}",
+            e.RobotSerialNumber,
+            e.PreviousConnectionState,
+            e.NewConnectionState);
+        RobotConnectionStateChanged?.Invoke(sender, e);
     }
 }

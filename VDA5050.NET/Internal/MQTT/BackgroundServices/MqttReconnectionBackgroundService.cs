@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using VDA5050.NET.Internal.MQTT.Topics;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.DependencyInjection.Settings;
 
@@ -39,18 +40,14 @@ internal sealed class MqttReconnectionBackgroundService : BackgroundService
                 if (_connection.IsConnected is false)
                 {
                     using var scope = _serviceScope.CreateScope();
-                    var robotRepository = scope.ServiceProvider
-                        .GetRequiredService<IConnectedRobotRepository>();
-                    var robots = robotRepository
-                        .GetRobotNames();
-                    foreach (var robot in robots)
+                    var topicsProvider = scope.ServiceProvider
+                        .GetRequiredService<ISubscribedTopicsProvider>();
+                    var topicsToSubscribe = await topicsProvider.GetTopicsToSubscribe();
+                    foreach (var topic in topicsToSubscribe)
                     {
-                        foreach (var robotTopic in robotRepository.GetTopicsForRobot(robot))
+                        if (_connection.HasSubscriber(topic) is false)
                         {
-                            if (_connection.HasSubscriber(robotTopic) is false)
-                            {
-                                await _connection.AddSubscription(robotTopic);
-                            }
+                            await _connection.AddSubscription(topic);
                         }
                     }
 
