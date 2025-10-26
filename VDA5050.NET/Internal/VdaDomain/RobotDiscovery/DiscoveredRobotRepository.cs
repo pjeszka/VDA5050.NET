@@ -5,15 +5,27 @@ namespace VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 
 public sealed class DiscoveredRobotRepository : IDiscoveredRobotRepository
 {
-    private readonly ConcurrentDictionary<RobotSerialNumber, DiscoveredRobot> _robots;
+    private readonly ConcurrentDictionary<RobotSerialNumber, DiscoveredRobot> _robots = new ();
 
-    public ICollection<RobotSerialNumber> GetDiscoveredRobots()
+    public DiscoveredRobot? GetRobot(RobotSerialNumber robotSerialNumber)
     {
-        return _robots.Keys;
+        _robots.TryGetValue(robotSerialNumber, out var robot);
+        
+        return robot;
     }
 
-    public void AddRobot(DiscoveredRobot robot)
+    public ICollection<DiscoveredRobot> GetDiscoveredRobots()
     {
+        return _robots.Values;
+    }
+
+    public void AddOrUpdateRobot(DiscoveredRobot robot)
+    {
+        if (_robots.ContainsKey(robot.SerialNumber))
+        {
+            
+        }
+
         _robots.AddOrUpdate(
             robot.SerialNumber,
             robot,

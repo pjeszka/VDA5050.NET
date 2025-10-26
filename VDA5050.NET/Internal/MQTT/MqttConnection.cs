@@ -149,8 +149,7 @@ public sealed class MqttConnection : IMqttConnection
 
     private async Task HandleMessage(MqttApplicationMessageReceivedEventArgs arguments)
     {
-        if (HasSubscriber(arguments.ApplicationMessage.Topic) is false &&
-            _initialTopics.Any(x => arguments.ApplicationMessage.Topic.StartsWith(x)))
+        if (HasSubscriber(arguments.ApplicationMessage.Topic) is false)
         {
             var initialMessageJson = arguments.ApplicationMessage.ConvertPayloadToString();
             await _initialTopicsHandler.HandleInitialTopicMessage(arguments.ApplicationMessage.Topic, initialMessageJson);

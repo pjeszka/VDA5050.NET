@@ -4,6 +4,7 @@ namespace VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 
 public interface IDiscoveredRobotRepository
 {
-    ICollection<RobotSerialNumber> GetDiscoveredRobots();
-    void AddRobot(DiscoveredRobot robot);
+    DiscoveredRobot? GetRobot(RobotSerialNumber robotSerialNumber);
+    ICollection<DiscoveredRobot> GetDiscoveredRobots();
+    void AddOrUpdateRobot(DiscoveredRobot robot);
 }

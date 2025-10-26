@@ -19,7 +19,7 @@ public sealed class Vda5050Master : IVda5050Master
         throw new NotImplementedException();
     }
 
-    public Task<ICollection<RobotSerialNumber>> GetAccessibleRobots()
+    public Task<ICollection<DiscoveredRobot>> GetAccessibleRobots()
     {
         return Task.FromResult(_discoveredRobotRepository.GetDiscoveredRobots());
     }

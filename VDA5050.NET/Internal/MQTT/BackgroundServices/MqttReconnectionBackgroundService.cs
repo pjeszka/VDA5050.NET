@@ -15,17 +15,18 @@ internal sealed class MqttReconnectionBackgroundService : BackgroundService
     private readonly ILogger<MqttReconnectionBackgroundService> _logger;
     private readonly string _brokerAddress;
 
-    internal MqttReconnectionBackgroundService(
+    public MqttReconnectionBackgroundService(
         IMqttConnection connection,
-        IOptions<MqttConnectionSettings> mqttConnectionSettings,
+        Vda5050MasterSettings masterSettings,
         ILogger<MqttReconnectionBackgroundService> logger,
         IServiceProvider serviceScope)
     {
         _connection = connection;
         _logger = logger;
         _serviceScope = serviceScope;
-        _reconnectInterval = TimeSpan.FromMilliseconds(mqttConnectionSettings.Value.ReconnectionPeriodInMs);
-        _brokerAddress = mqttConnectionSettings.Value.BrokerAddress + ":" + mqttConnectionSettings.Value.Port;
+        var mqttConnectionSettings = masterSettings.Mqtt;
+        _reconnectInterval = TimeSpan.FromMilliseconds(mqttConnectionSettings.ReconnectionPeriodInMs);
+        _brokerAddress = mqttConnectionSettings.BrokerAddress + ":" + mqttConnectionSettings.Port;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

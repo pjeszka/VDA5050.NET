@@ -1,4 +1,5 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Robots;
+﻿using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
+using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Models;
 
 namespace VDA5050.NET.Public.Services;
@@ -6,7 +7,7 @@ namespace VDA5050.NET.Public.Services;
 public interface IVda5050Master
 {
     // robot discovery
-    Task<ICollection<RobotSerialNumber>> GetAccessibleRobots();
+    Task<ICollection<DiscoveredRobot>> GetAccessibleRobots();
     
     // robot management
     Task<ICollection<RobotSerialNumber>> GetConnectedRobots();
