@@ -27,6 +27,13 @@ public sealed class OperationalRobotRepository : IOperationalRobotRepository, IS
         return Task.CompletedTask;
     }
 
+    public Task<OperationalRobot?> GetRobot(RobotSerialNumber robotSerialNumber)
+    {
+        _robots.TryGetValue(robotSerialNumber, out var robot);
+        
+        return Task.FromResult(robot);
+    }
+
     public Task<ICollection<OperationalRobot>> GetRobots()
     {
         return Task.FromResult(_robots.Values);

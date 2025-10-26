@@ -40,8 +40,8 @@ public sealed class OperationalRobot
         }
     }
     
-    public event EventHandler<RobotStateChangedEvent> RobotStateChanged;
-    public event EventHandler<RobotConnectionStateChangedEvent> RobotConnectionStateChanged;
+    public event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
+    public event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
     
     public string TopicPrefix { get; }
     public RobotSerialNumber SerialNumber { get; }

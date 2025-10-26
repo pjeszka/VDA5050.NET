@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Events;
+using VDA5050.NET.Public.Messages;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.RobotDiscovery;
 using VDA5050.NET.Public.Services;
@@ -12,21 +15,29 @@ public sealed class Vda5050Master : IVda5050Master
 {
     private readonly IDiscoveredRobotRepository _discoveredRobotRepository;
     private readonly IOperationalRobotRepository _operationalRobotRepository;
+    private readonly IMqttConnection _mqttConnection;
     private readonly ILogger<Vda5050Master> _logger;
 
     public Vda5050Master(
         IDiscoveredRobotRepository discoveredRobotRepository,
         IOperationalRobotRepository operationalRobotRepository,
+        IMqttConnection mqttConnection,
         ILogger<Vda5050Master> logger)
     {
         _discoveredRobotRepository = discoveredRobotRepository;
         _operationalRobotRepository = operationalRobotRepository;
         _logger = logger;
+        _mqttConnection = mqttConnection;
     }
 
     public Task<ICollection<OperationalRobot>> GetOperationalRobots()
     {
         return _operationalRobotRepository.GetRobots();
+    }
+
+    public Task<DiscoveredRobot?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber)
+    {
+        return Task.FromResult(_discoveredRobotRepository.GetRobot(robotSerialNumber));
     }
 
     public Task<ICollection<DiscoveredRobot>> GetAccessibleRobots()
@@ -38,7 +49,7 @@ public sealed class Vda5050Master : IVda5050Master
     {
         if (await _operationalRobotRepository.IsRobotOperational(robotSettings.RobotSerialNumber))
         {
-            _logger.LogWarning("Robot {robotSerialNumber} is already connected.", robotSettings.RobotSerialNumber);
+            _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSettings.RobotSerialNumber.Value);
             return;
         }
 
@@ -46,17 +57,33 @@ public sealed class Vda5050Master : IVda5050Master
             OnRobotConnectionStateChanged,
             OnRobotStateChanged);
         await _operationalRobotRepository.AddRobot(connectedRobot);
+
+        foreach (var topic in connectedRobot.ObservedTopics)
+        {
+            await _mqttConnection.AddSubscription(topic);
+        }
+        
+        _logger.LogInformation("Robot {robotSerialNumber} was added to operation.", robotSettings.RobotSerialNumber.Value);
+        
     }
 
     public async Task StopRobotOperation(RobotSerialNumber robotSerialNumber)
     {
-        if (await _operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
+        var robot = await _operationalRobotRepository.GetRobot(robotSerialNumber);
+
+        if (robot is null)
         {
-            _logger.LogWarning("Robot {robotSerialNumber} is already disconnected.", robotSerialNumber);
+            _logger.LogWarning("Robot {robotSerialNumber} operation is already stopped.", robotSerialNumber.Value);
             return;
         }
-        
+
+        foreach (var topic in robot.ObservedTopics)
+        {
+            await _mqttConnection.RemoveSubscription(topic);
+        }
+
         await _operationalRobotRepository.RemoveRobot(robotSerialNumber);
+        _logger.LogInformation("Robot {robotSerialNumber} was removed from operation.", robotSerialNumber.Value);
     }
 
     public void AddRobotConnectionStateChangeHandler(EventHandler<RobotConnectionStateChangedEvent> robotConnectionStateChangedHandler)
@@ -93,8 +120,8 @@ public sealed class Vda5050Master : IVda5050Master
     {
         _logger.LogInformation(
             "Robot {robotSerialNumber} state changed to {state}",
-            e.RobotSerialNumber,
-            e.State);
+            e.RobotSerialNumber.Value,
+            e.State.ToJson());
         RobotStateChanged?.Invoke(sender, e);
     }
 
@@ -102,7 +129,7 @@ public sealed class Vda5050Master : IVda5050Master
     {
         _logger.LogInformation(
             "Robot {robotSerialNumber} connection state changed from {previousConnectionState} to {newConnectionState}",
-            e.RobotSerialNumber,
+            e.RobotSerialNumber.Value,
             e.PreviousConnectionState,
             e.NewConnectionState);
         RobotConnectionStateChanged?.Invoke(sender, e);
