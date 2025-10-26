@@ -2,4 +2,4 @@
 
 namespace VDA5050.NET.Public.Models.Orders;
 
-public record RobotOrder(RobotSerialNumber RobotSerialNumber, Order Order);
+public sealed record RobotOrderUpdate(RobotSerialNumber RobotSerialNumber, Order Order);

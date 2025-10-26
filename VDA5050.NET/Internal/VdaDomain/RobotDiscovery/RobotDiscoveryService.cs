@@ -1,10 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using VDA5050.NET.Internal.Messages;
-using VDA5050.NET.Internal.Messages.Connection;
 using VDA5050.NET.Internal.MQTT.Topics;
 using VDA5050.NET.Public.DependencyInjection.Settings;
+using VDA5050.NET.Public.Messages;
+using VDA5050.NET.Public.Messages.Connection;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.RobotDiscovery;
 using JsonSerializer = System.Text.Json.JsonSerializer;

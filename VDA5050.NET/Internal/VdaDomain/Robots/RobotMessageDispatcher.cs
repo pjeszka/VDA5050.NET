@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using VDA5050.NET.Internal.Messages;
-using VDA5050.NET.Internal.Messages.Connection;
-using VDA5050.NET.Internal.Messages.Factsheet;
-using VDA5050.NET.Internal.Messages.State;
-using VDA5050.NET.Internal.Messages.Visualization;
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.Messages.Topics;
+using VDA5050.NET.Public.Messages;
+using VDA5050.NET.Public.Messages.Connection;
+using VDA5050.NET.Public.Messages.Factsheet;
+using VDA5050.NET.Public.Messages.State;
+using VDA5050.NET.Public.Messages.Visualization;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 

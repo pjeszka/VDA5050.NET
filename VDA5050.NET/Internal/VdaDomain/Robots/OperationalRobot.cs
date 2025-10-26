@@ -1,9 +1,9 @@
-﻿using VDA5050.NET.Internal.Messages.Connection;
-using VDA5050.NET.Internal.Messages.Connection.Enums;
-using VDA5050.NET.Internal.Messages.Factsheet;
-using VDA5050.NET.Internal.Messages.State;
-using VDA5050.NET.Internal.Messages.Visualization;
-using VDA5050.NET.Public.Events;
+﻿using VDA5050.NET.Public.Events;
+using VDA5050.NET.Public.Messages.Connection;
+using VDA5050.NET.Public.Messages.Connection.Enums;
+using VDA5050.NET.Public.Messages.Factsheet;
+using VDA5050.NET.Public.Messages.State;
+using VDA5050.NET.Public.Messages.Visualization;
 using VDA5050.NET.Public.Models;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
