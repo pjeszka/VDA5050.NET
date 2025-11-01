@@ -18,9 +18,8 @@ public interface IVda5050Master
     
     // robot state observing
     void AddRobotConnectionStateChangeHandler(EventHandler<RobotConnectionStateChangedEvent> robotConnectionStateChangedHandler);
-    event EventHandler<RobotConnectionStateChangedEvent> RobotConnectionStateChanged;
     void AddRobotStateChangeHandler(EventHandler<RobotStateChangedEvent> robotStateChangedHandler);
-    event EventHandler<RobotStateChangedEvent> RobotStateChanged;
+    void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler);
     
     // robot visualization
     // TODO: implement

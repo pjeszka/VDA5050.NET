@@ -10,10 +10,9 @@ namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
 public sealed class OperationalRobot
 {
+    private readonly bool _isObsevingVisualization;
     public OperationalRobot(
-        RobotSettings settings,
-        EventHandler<RobotConnectionStateChangedEvent>? robotConnectionStateChangedHandler = null,
-        EventHandler<RobotStateChangedEvent>? robotStateChangedHandler = null)
+        RobotSettings settings)
     {
         TopicPrefix = settings.RobotTopicPrefix;
         SerialNumber = settings.RobotSerialNumber;
@@ -23,25 +22,17 @@ public sealed class OperationalRobot
             $"{settings.RobotTopicPrefix}/state",
             $"{settings.RobotTopicPrefix}/factsheet"
         };
-        
+
+        _isObsevingVisualization = settings.ShouldObserveVisualization;
         if (settings.ShouldObserveVisualization)
         {
             ObservedTopics.Add($"{settings.RobotTopicPrefix}/visualization");       
         }
-
-        if (robotConnectionStateChangedHandler is not null)
-        {
-            RobotConnectionStateChanged += robotConnectionStateChangedHandler;
-        }
-        
-        if (robotStateChangedHandler is not null)
-        {
-            RobotStateChanged += robotStateChangedHandler;
-        }
     }
     
-    public event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
-    public event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
+    private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
+    private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
+    private event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
     
     public string TopicPrefix { get; }
     public RobotSerialNumber SerialNumber { get; }
@@ -49,6 +40,16 @@ public sealed class OperationalRobot
     public ConnectionState ConnectionState { get; private set; }
     public Factsheet? Factsheet { get; private set; }
     public State? State { get; private set; }
+
+    public AgvPosition? Position { get; private set; }
+    
+    public bool IsLocalized => Position is not null;
+    
+    public void AddPositionChangeHandler(
+        EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
+    {
+        RobotPositionChanged += robotPositionChangedHandler;
+    }
 
     public void AddStateChangeHandler(
         EventHandler<RobotStateChangedEvent> robotStateChangedHandler)
@@ -76,6 +77,11 @@ public sealed class OperationalRobot
     
     public void OnStateMessage(State stateMessage)
     {
+        if (_isObsevingVisualization is false)
+        {
+            Position = stateMessage.AgvPosition;
+        }
+
         State = stateMessage;
         RobotStateChanged?.Invoke(
             this,
@@ -90,7 +96,18 @@ public sealed class OperationalRobot
     
     public void OnVisualizationMessage(Visualization visualizationMessage)
     {
-        throw new NotImplementedException();       
+        if (_isObsevingVisualization)
+        {
+            UpdateRobotPosition(visualizationMessage.AgvPosition);
+        }
     }
-    
+
+    private void UpdateRobotPosition(AgvPosition position)
+    {
+        Position = position;
+        RobotPositionChanged?.Invoke(
+            this,
+            new RobotPositionChangedEvent(SerialNumber, Position.X, Position.Y, Position.Theta));
+    }
+
 }

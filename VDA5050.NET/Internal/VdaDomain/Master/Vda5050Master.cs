@@ -53,9 +53,10 @@ public sealed class Vda5050Master : IVda5050Master
             return;
         }
 
-        var connectedRobot = new OperationalRobot(robotSettings, 
-            OnRobotConnectionStateChanged,
-            OnRobotStateChanged);
+        var connectedRobot = new OperationalRobot(robotSettings);
+        connectedRobot.AddConnectionStateChangeHandler(OnRobotConnectionStateChanged);
+        connectedRobot.AddStateChangeHandler(OnRobotStateChanged);
+        connectedRobot.AddPositionChangeHandler(OnRobotPositionChanged);
         await _operationalRobotRepository.AddRobot(connectedRobot);
 
         foreach (var topic in connectedRobot.ObservedTopics)
@@ -97,8 +98,15 @@ public sealed class Vda5050Master : IVda5050Master
     {
         RobotStateChanged += robotStateChangedHandler;
     }
-
+    
     public event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
+    
+    public void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
+    {
+        RobotPositionChanged += robotPositionChangedHandler;
+    }
+
+    public event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     // public Task SendRobotOrder(RobotOrder robotOrder)
     // {
     //     throw new NotImplementedException();
@@ -116,9 +124,14 @@ public sealed class Vda5050Master : IVda5050Master
     //     throw new NotImplementedException();
     // }
     
+    private void OnRobotPositionChanged(object? sender, RobotPositionChangedEvent e)
+    {
+        RobotPositionChanged?.Invoke(sender, e);
+    }
+    
     private void OnRobotStateChanged(object? sender, RobotStateChangedEvent e)
     {
-        _logger.LogInformation(
+        _logger.LogDebug(
             "Robot {robotSerialNumber} state changed to {state}",
             e.RobotSerialNumber.Value,
             e.State.ToJson());
@@ -127,7 +140,7 @@ public sealed class Vda5050Master : IVda5050Master
 
     private void OnRobotConnectionStateChanged(object? sender, RobotConnectionStateChangedEvent e)
     {
-        _logger.LogInformation(
+        _logger.LogWarning(
             "Robot {robotSerialNumber} connection state changed from {previousConnectionState} to {newConnectionState}",
             e.RobotSerialNumber.Value,
             e.PreviousConnectionState,
