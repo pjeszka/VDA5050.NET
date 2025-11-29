@@ -1,4 +1,6 @@
-﻿namespace VDA5050.NET.Internal.MQTT;
+﻿using MQTTnet.Protocol;
+
+namespace VDA5050.NET.Internal.MQTT;
 
 public interface IMqttConnection
 {
@@ -7,5 +9,10 @@ public interface IMqttConnection
     Task AddSubscription(string topic);
     Task RemoveSubscription(string topic);
     Task ConnectAsync();
+    Task PublishAsync(
+        string topic,
+        string messagePayload,
+        bool isRetained = false,
+        MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce);
     MqttConnectionDetailsDto GetConnectionDetails();
 }

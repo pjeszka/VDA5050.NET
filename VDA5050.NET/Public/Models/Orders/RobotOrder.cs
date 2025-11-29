@@ -2,4 +2,9 @@
 
 namespace VDA5050.NET.Public.Models.Orders;
 
-public record RobotOrder(RobotSerialNumber RobotSerialNumber, Order Order);
+public sealed record RobotOrder(RobotSerialNumber RobotSerialNumber, NewOrderDto Order);
+
+public sealed record NewOrderDto(List<Node> Nodes, List<Edge> Edges, string? ZoneSetId = null);
+
+public sealed record RobotOrderUpdate(RobotSerialNumber RobotSerialNumber, OrderUpdateDto OrderUpdate);
+public sealed record OrderUpdateDto(OrderId orderId, List<Node> Nodes, List<Edge> Edges, string? ZoneSetId = null);

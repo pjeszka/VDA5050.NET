@@ -1,11 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
+using VDA5050.NET.Internal.VdaDomain.RobotOrders;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Events;
+using VDA5050.NET.Public.Exceptions;
 using VDA5050.NET.Public.Messages;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.InstantActions;
+using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.RobotDiscovery;
 using VDA5050.NET.Public.Services;
 
@@ -16,17 +21,20 @@ public sealed class Vda5050Master : IVda5050Master
     private readonly IDiscoveredRobotRepository _discoveredRobotRepository;
     private readonly IOperationalRobotRepository _operationalRobotRepository;
     private readonly IMqttConnection _mqttConnection;
+    private readonly IRobotOrderSender _robotOrderSender;
     private readonly ILogger<Vda5050Master> _logger;
 
     public Vda5050Master(
         IDiscoveredRobotRepository discoveredRobotRepository,
         IOperationalRobotRepository operationalRobotRepository,
         IMqttConnection mqttConnection,
-        ILogger<Vda5050Master> logger)
+        ILogger<Vda5050Master> logger,
+        IRobotOrderSender robotOrderSender)
     {
         _discoveredRobotRepository = discoveredRobotRepository;
         _operationalRobotRepository = operationalRobotRepository;
         _logger = logger;
+        _robotOrderSender = robotOrderSender;
         _mqttConnection = mqttConnection;
     }
 
@@ -106,24 +114,44 @@ public sealed class Vda5050Master : IVda5050Master
         RobotPositionChanged += robotPositionChangedHandler;
     }
 
+    public async Task<OrderId> SendRobotOrder(RobotOrder robotOrder)
+    {
+        await ValidateRobotIsOperational(robotOrder.RobotSerialNumber);
+        
+        return await _robotOrderSender.SendOrder(robotOrder);
+    }
+
+    public async Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate)
+    {
+        await ValidateRobotIsOperational(robotOrderUpdate.RobotSerialNumber);
+        
+        await _robotOrderSender.SendOrderUpdate(robotOrderUpdate);
+    }
+
+    public async Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
+    {
+        await ValidateRobotIsOperational(robotSerialNumber);
+        
+        await _robotOrderSender.CancelOrder(orderId);
+    }
+
+    public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
+    public async Task RequestInstantAction(RobotInstantActionRequest request)
+    {
+        await ValidateRobotIsOperational(request.RobotSerialNumber);
+    }
+
     public event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
-    // public Task SendRobotOrder(RobotOrder robotOrder)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
-    // public Task UpdateRobotOrder()
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
-    // public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
-    //
-    // public Task RequestInstantAction()
-    // {
-    //     throw new NotImplementedException();
-    // }
-    
+
+    private async Task ValidateRobotIsOperational(RobotSerialNumber robotSerialNumber)
+    {
+        if (await _operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
+        {
+            _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSerialNumber);
+            throw new RobotNotOperationalException(robotSerialNumber);
+        }
+    }
+
     private void OnRobotPositionChanged(object? sender, RobotPositionChangedEvent e)
     {
         RobotPositionChanged?.Invoke(sender, e);

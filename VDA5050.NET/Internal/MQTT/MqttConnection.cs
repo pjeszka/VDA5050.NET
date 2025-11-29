@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using System.Text;
+using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
+using MQTTnet.Protocol;
 using VDA5050.NET.Internal.MQTT.Topics;
 using VDA5050.NET.Public.DependencyInjection.Settings;
 
@@ -55,7 +56,7 @@ public sealed class MqttConnection : IMqttConnection
 
         mqttClientOptionsBuilder.WithClientId(clientId);
         var mqttClientOptions = mqttClientOptionsBuilder.Build();
-
+        
         _client.ApplicationMessageReceivedAsync += async messageArguments => await HandleMessage(messageArguments);
         _client.ConnectedAsync += HandleSuccessfulConnection;
         _client.ConnectingFailedAsync += HandleFailedConnection;
@@ -86,6 +87,22 @@ public sealed class MqttConnection : IMqttConnection
 
         await _client.StartAsync(_clientOptions);
         await SubscribeAllDefinedTopics();
+    }
+
+    public Task PublishAsync(
+        string topic,
+        string messagePayload,
+        bool isRetained = false,
+        MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce)
+    {
+        var message = new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
+            .WithPayload(Encoding.UTF8.GetBytes(messagePayload))
+            .WithQualityOfServiceLevel(qos)
+            .WithRetainFlag(isRetained)
+            .Build();
+        
+        return _client.EnqueueAsync(message);
     }
 
     public MqttConnectionDetailsDto GetConnectionDetails()

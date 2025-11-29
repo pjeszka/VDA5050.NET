@@ -1,6 +1,8 @@
 ﻿using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.InstantActions;
+using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.RobotDiscovery;
 
 namespace VDA5050.NET.Public.Services;
@@ -21,16 +23,12 @@ public interface IVda5050Master
     void AddRobotStateChangeHandler(EventHandler<RobotStateChangedEvent> robotStateChangedHandler);
     void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler);
     
-    // robot visualization
-    // TODO: implement
-    
     // ordering
-    // TODO implement
-    // Task SendRobotOrder(RobotOrder robotOrder);
-    // Task UpdateRobotOrder();
-    // event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;
+    Task<OrderId> SendRobotOrder(RobotOrder robotOrder);
+    Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate);
+    Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
+    event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;
     
     // instantActions
-    // TODO implement
-    // Task RequestInstantAction();
+    Task RequestInstantAction(RobotInstantActionRequest request) ;
 }
