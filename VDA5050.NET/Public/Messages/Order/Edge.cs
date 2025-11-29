@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using VDA5050.NET.Public.Models.Orders;
 
 namespace VDA5050.NET.Public.Messages.Order;
 
@@ -54,4 +55,27 @@ public class Edge
 
     [JsonPropertyName("actions")]
     public List<ActionItem> Actions { get; set; } = new();
+    
+    public static Edge CreateEdgeMessage(EdgeDto edgeDto, uint index)
+    {
+        return new Edge { 
+            EdgeId = edgeDto.Id, 
+            SequenceId = index,
+            StartNodeId = edgeDto.StartNodeId,
+            EndNodeId = edgeDto.EndNodeId,
+            Released = edgeDto.Released,
+            EdgeDescription = edgeDto.EdgeDescription,
+            MaxSpeed = edgeDto.EdgeParams?.SpeedParams?.MaxSpeed,
+            MaxRotationSpeed = edgeDto.EdgeParams?.SpeedParams?.MaxRotationSpeep,
+            MaxHeight = edgeDto.EdgeParams?.DimensionParams?.MaxHeight,
+            MinHeight = edgeDto.EdgeParams?.DimensionParams?.MinHeight,
+            Orientation = edgeDto.OrientationParams?.Orientation,
+            OrientationType = edgeDto.OrientationParams?.OrientationType.ToString(),
+            Direction = edgeDto.Direction,
+            RotationAllowed = edgeDto.OrientationParams?.RotationAllowed,
+            Length = edgeDto.Length,
+            Trajectory = edgeDto.Trajectory,
+            Actions = edgeDto.Actions.Select(ActionItem.CreateActionItem).ToList()
+        };
+    }
 }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json;
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
@@ -132,7 +130,7 @@ public sealed class Vda5050Master : IVda5050Master
     {
         await ValidateRobotIsOperational(robotSerialNumber);
         
-        await _robotOrderSender.CancelOrder(orderId);
+        // TODO send instant action to cancel order
     }
 
     public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;

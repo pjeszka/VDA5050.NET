@@ -7,5 +7,4 @@ public interface IRobotOrderSender
 {
     Task<OrderId> SendOrder(RobotOrder robotOrder);
     Task SendOrderUpdate(RobotOrderUpdate robotOrderUpdate);
-    Task CancelOrder(OrderId orderId);
 }
