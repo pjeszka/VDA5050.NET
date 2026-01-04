@@ -12,19 +12,19 @@ namespace VDA5050.NET.Public.Messages.State
         public uint? OrderUpdateId { get; set; }
 
         [JsonPropertyName("lastNodeId")]
-        public string? LastNodeId { get; set; }
+        public string LastNodeId { get; set; } = string.Empty;
 
         [JsonPropertyName("lastNodeSequenceId")]
-        public uint? LastNodeSequenceId { get; set; }
+        public uint LastNodeSequenceId { get; set; }
 
         [JsonPropertyName("nodeStates")]
-        public List<NodeState>? NodeStates { get; set; }
+        public List<NodeState> NodeStates { get; set; }
 
         [JsonPropertyName("edgeStates")]
-        public List<EdgeState>? EdgeStates { get; set; }
+        public List<EdgeState> EdgeStates { get; set; }
 
         [JsonPropertyName("actionStates")]
-        public List<ActionState>? ActionStates { get; set; }
+        public List<ActionState> ActionStates { get; set; }
 
         [JsonPropertyName("agvPosition")]
         public AgvPosition AgvPosition { get; set; }

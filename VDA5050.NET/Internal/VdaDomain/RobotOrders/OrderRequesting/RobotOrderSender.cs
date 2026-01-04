@@ -8,7 +8,7 @@ using VDA5050.NET.Public.Messages.Order;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.Orders;
 
-namespace VDA5050.NET.Internal.VdaDomain.RobotOrders;
+namespace VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 
 public sealed class RobotOrderSender : IRobotOrderSender
 {

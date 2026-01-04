@@ -24,7 +24,7 @@ public interface IVda5050Master
     void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler);
     
     // ordering
-    Task<OrderId> SendRobotOrder(RobotOrder robotOrder);
+    Task SendRobotOrder(RobotOrder robotOrder);
     Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate);
     Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
     event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;

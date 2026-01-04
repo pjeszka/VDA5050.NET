@@ -5,6 +5,7 @@ using VDA5050.NET.Internal.MQTT.BackgroundServices;
 using VDA5050.NET.Internal.VdaDomain.Master;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.DependencyInjection.Settings;
 using VDA5050.NET.Public.Services;

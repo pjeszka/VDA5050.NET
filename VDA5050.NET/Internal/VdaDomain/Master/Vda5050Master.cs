@@ -2,6 +2,7 @@
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Exceptions;
@@ -112,16 +113,28 @@ public sealed class Vda5050Master : IVda5050Master
         RobotPositionChanged += robotPositionChangedHandler;
     }
 
-    public async Task<OrderId> SendRobotOrder(RobotOrder robotOrder)
+    public async Task SendRobotOrder(RobotOrder robotOrder)
     {
         await ValidateRobotIsOperational(robotOrder.RobotSerialNumber);
         
-        return await _robotOrderSender.SendOrder(robotOrder);
+        var robot = await _operationalRobotRepository.GetRobot(robotOrder.RobotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(robotOrder.RobotSerialNumber);
+        }
+        
+        var robotOrderState = await _robotOrderSender.SendOrder(robot, robotOrder);
     }
 
     public async Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate)
     {
         await ValidateRobotIsOperational(robotOrderUpdate.RobotSerialNumber);
+        
+        var robot = await _operationalRobotRepository.GetRobot(robotOrderUpdate.RobotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(robotOrderUpdate.RobotSerialNumber);
+        }
         
         await _robotOrderSender.SendOrderUpdate(robotOrderUpdate);
     }
