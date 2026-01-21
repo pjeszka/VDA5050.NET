@@ -1,5 +1,9 @@
-﻿using VDA5050.NET.Public.Messages.Connection.Enums;
+﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
 
 namespace VDA5050.NET.Public.Models.RobotDiscovery;
 
-public record DiscoveredRobot(RobotSerialNumber SerialNumber, string Version, string RobotTopicPrefix, ConnectionState ConnectionState);
+public record DiscoveredRobot(
+    RobotSerialNumber SerialNumber,
+    string Version,
+    string RobotTopicPrefix,
+    ConnectionState ConnectionState);

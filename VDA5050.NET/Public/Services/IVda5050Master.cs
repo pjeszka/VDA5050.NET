@@ -4,6 +4,7 @@ using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.RobotDiscovery;
+using VDA5050.NET.Public.Models.Robots;
 
 namespace VDA5050.NET.Public.Services;
 
@@ -11,10 +12,11 @@ public interface IVda5050Master
 {
     // robot discovery
     Task<DiscoveredRobot?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber);
-    Task<ICollection<DiscoveredRobot>> GetAccessibleRobots();
+    Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots();
+    // TODO event about discovering robot
     
     // robot management
-    Task<ICollection<OperationalRobot>> GetOperationalRobots();
+    Task<ICollection<RobotState>> GetOperationalRobots();
     Task StartRobotOperation(RobotSettings robotSettings);
     Task StopRobotOperation(RobotSerialNumber robotSerialNumber);
     
@@ -24,11 +26,12 @@ public interface IVda5050Master
     void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler);
     
     // ordering
-    Task SendRobotOrder(RobotOrder robotOrder);
-    Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate);
+    Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest);
+    Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest);
     Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
     event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;
+    event EventHandler<RobotOrderRequestStateChanged> RobotOrderRequestStateChanged;
     
     // instantActions
-    Task RequestInstantAction(RobotInstantActionRequest request) ;
+    Task<ActionId> RequestInstantAction(RobotInstantActionRequest request);
 }

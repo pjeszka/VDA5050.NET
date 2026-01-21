@@ -4,6 +4,6 @@ namespace VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 
 public interface IRobotOrderSender
 {
-    Task<OrderId> SendOrder(RobotOrder robotOrder);
-    Task SendOrderUpdate(RobotOrderUpdate robotOrderUpdate);
+    Task<OrderId> SendOrder(RobotOrderRequest robotOrderRequest);
+    Task<OrderUpdateId> SendOrderUpdate(RobotOrderUpdateRequest robotOrderUpdateRequest);
 }

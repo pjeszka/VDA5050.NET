@@ -1,14 +1,14 @@
-﻿using VDA5050.NET.Public.Events;
-using VDA5050.NET.Public.Messages.Connection;
-using VDA5050.NET.Public.Messages.Connection.Enums;
-using VDA5050.NET.Public.Messages.Factsheet;
-using VDA5050.NET.Public.Messages.State;
-using VDA5050.NET.Public.Messages.Visualization;
+﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Visualization;
+using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
-public sealed class OperationalRobot
+internal sealed class OperationalRobot
 {
     private readonly bool _isObsevingVisualization;
     public OperationalRobot(
@@ -38,8 +38,8 @@ public sealed class OperationalRobot
     public RobotSerialNumber SerialNumber { get; }
     public ICollection<string> ObservedTopics { get; }
     public ConnectionState ConnectionState { get; private set; }
-    public Factsheet? Factsheet { get; private set; }
-    public State? State { get; private set; }
+    public FactsheetMessage? Factsheet { get; private set; }
+    public StateMessage? State { get; private set; }
 
     public AgvPosition? Position { get; private set; }
     
@@ -63,42 +63,42 @@ public sealed class OperationalRobot
         RobotConnectionStateChanged += robotConnectionStateChangedHandler;
     }
 
-    public void OnConnectionMessage(Connection connectionMessage)
+    internal void OnConnectionMessage(ConnectionMessage connectionMessageMessage)
     {
-        if (connectionMessage.ConnectionState != ConnectionState)
+        if (connectionMessageMessage.ConnectionState != ConnectionState)
         {
             var previousConnectionState = ConnectionState;
-            ConnectionState = connectionMessage.ConnectionState;
+            ConnectionState = connectionMessageMessage.ConnectionState;
             RobotConnectionStateChanged?.Invoke(
                 this,
                 new RobotConnectionStateChangedEvent(SerialNumber, previousConnectionState, ConnectionState));
         }
     }
     
-    public void OnStateMessage(State stateMessage)
+    public void OnStateMessage(StateMessage stateMessageMessage)
     {
         if (_isObsevingVisualization is false)
         {
-            Position = stateMessage.AgvPosition;
+            Position = stateMessageMessage.AgvPosition;
         }
 
-        State = stateMessage;
+        State = stateMessageMessage;
         RobotStateChanged?.Invoke(
             this,
             new RobotStateChangedEvent(SerialNumber, State));
     }
     
-    public void OnFactsheetMessage(Factsheet factsheetMessage)
+    public void OnFactsheetMessage(FactsheetMessage factsheetMessageMessage)
     {
         // TODO: think about refactor
-        Factsheet = factsheetMessage;
+        Factsheet = factsheetMessageMessage;
     }
     
-    public void OnVisualizationMessage(Visualization visualizationMessage)
+    public void OnVisualizationMessage(VisualizationMessage visualizationMessageMessage)
     {
         if (_isObsevingVisualization)
         {
-            UpdateRobotPosition(visualizationMessage.AgvPosition);
+            UpdateRobotPosition(visualizationMessageMessage.AgvPosition);
         }
     }
 

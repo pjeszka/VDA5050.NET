@@ -39,7 +39,8 @@
     <ItemGroup>
       <Folder Include="Internal\" />
       <Folder Include="Internal\MQTT\Settings\" />
-      <Folder Include="Internal\VdaDomain\RobotOrders\RobotOrderState\" />
+      <Folder Include="Public\Enums\Domain\" />
+      <Folder Include="Public\Models\Orders\OrderRequesting\" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using VDA5050.NET.Internal.MQTT;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Exceptions;
-using VDA5050.NET.Public.Messages;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
@@ -113,30 +113,30 @@ public sealed class Vda5050Master : IVda5050Master
         RobotPositionChanged += robotPositionChangedHandler;
     }
 
-    public async Task SendRobotOrder(RobotOrder robotOrder)
+    public async Task SendRobotOrder(RobotOrderRequest robotOrderRequest)
     {
-        await ValidateRobotIsOperational(robotOrder.RobotSerialNumber);
+        await ValidateRobotIsOperational(robotOrderRequest.RobotSerialNumber);
         
-        var robot = await _operationalRobotRepository.GetRobot(robotOrder.RobotSerialNumber);
+        var robot = await _operationalRobotRepository.GetRobot(robotOrderRequest.RobotSerialNumber);
         if (robot is null)
         {
-            throw new RobotNotOperationalException(robotOrder.RobotSerialNumber);
+            throw new RobotNotOperationalException(robotOrderRequest.RobotSerialNumber);
         }
         
-        var robotOrderState = await _robotOrderSender.SendOrder(robot, robotOrder);
+        var robotOrderState = await _robotOrderSender.SendOrder(robot, robotOrderRequest);
     }
 
-    public async Task UpdateRobotOrder(RobotOrderUpdate robotOrderUpdate)
+    public async Task UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
     {
-        await ValidateRobotIsOperational(robotOrderUpdate.RobotSerialNumber);
+        await ValidateRobotIsOperational(robotOrderUpdateRequest.RobotSerialNumber);
         
-        var robot = await _operationalRobotRepository.GetRobot(robotOrderUpdate.RobotSerialNumber);
+        var robot = await _operationalRobotRepository.GetRobot(robotOrderUpdateRequest.RobotSerialNumber);
         if (robot is null)
         {
-            throw new RobotNotOperationalException(robotOrderUpdate.RobotSerialNumber);
+            throw new RobotNotOperationalException(robotOrderUpdateRequest.RobotSerialNumber);
         }
         
-        await _robotOrderSender.SendOrderUpdate(robotOrderUpdate);
+        await _robotOrderSender.SendOrderUpdate(robotOrderUpdateRequest);
     }
 
     public async Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
@@ -173,7 +173,7 @@ public sealed class Vda5050Master : IVda5050Master
         _logger.LogDebug(
             "Robot {robotSerialNumber} state changed to {state}",
             e.RobotSerialNumber.Value,
-            e.State.ToJson());
+            e.StateMessage.ToJson());
         RobotStateChanged?.Invoke(sender, e);
     }
 

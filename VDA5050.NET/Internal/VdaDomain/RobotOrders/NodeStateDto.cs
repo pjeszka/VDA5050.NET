@@ -1,4 +1,4 @@
-﻿using VDA5050.NET.Public.Messages.State;
+﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotOrders;
 

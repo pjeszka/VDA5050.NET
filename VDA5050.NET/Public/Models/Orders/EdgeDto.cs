@@ -1,4 +1,4 @@
-﻿using VDA5050.NET.Public.Messages.Order;
+﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Order;
 using VDA5050.NET.Public.Models.InstantActions;
 
 namespace VDA5050.NET.Public.Models.Orders;

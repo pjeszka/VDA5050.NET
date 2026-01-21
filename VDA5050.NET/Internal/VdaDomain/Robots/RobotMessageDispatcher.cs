@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VDA5050.NET.Internal.MQTT;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Visualization;
 using VDA5050.NET.Internal.VdaDomain.Messages.Topics;
-using VDA5050.NET.Public.Messages;
-using VDA5050.NET.Public.Messages.Connection;
-using VDA5050.NET.Public.Messages.Factsheet;
-using VDA5050.NET.Public.Messages.State;
-using VDA5050.NET.Public.Messages.Visualization;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
@@ -44,7 +44,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
         switch (topicType)
         {
             case TopicType.State:
-                var stateMessage = message.FromJson<State>();
+                var stateMessage = message.FromJson<StateMessage>();
                 if (stateMessage is null)
                 {
                     _logger.LogError("Could not deserialize state message for robot {robotId}", robot.SerialNumber);
@@ -53,7 +53,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
                 robot.OnStateMessage(stateMessage);
                 break;
             case TopicType.Connection:
-                var connectionMessage = message.FromJson<Connection>();
+                var connectionMessage = message.FromJson<ConnectionMessage>();
                 if (connectionMessage is null)
                 {
                     _logger.LogError("Could not deserialize connection message for robot {robotId}", robot.SerialNumber);
@@ -62,7 +62,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
                 robot.OnConnectionMessage(connectionMessage);
                 break;
             case TopicType.Factsheet:
-                var factsheetMessage = message.FromJson<Factsheet>();
+                var factsheetMessage = message.FromJson<FactsheetMessage>();
                 if (factsheetMessage is null)
                 {
                     _logger.LogError("Could not deserialize factsheet message for robot {robotId}", robot.SerialNumber);
@@ -71,7 +71,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
                 robot.OnFactsheetMessage(factsheetMessage);
                 break;
             case TopicType.Visualization:
-                var visualizationMessage = message.FromJson<Visualization>();
+                var visualizationMessage = message.FromJson<VisualizationMessage>();
                 if (visualizationMessage is null)
                 {
                     _logger.LogError("Could not deserialize factsheet message for robot {robotId}", robot.SerialNumber);

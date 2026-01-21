@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using VDA5050.NET.Internal.MQTT.Topics;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
 using VDA5050.NET.Public.DependencyInjection.Settings;
-using VDA5050.NET.Public.Messages;
-using VDA5050.NET.Public.Messages.Connection;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.RobotDiscovery;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -40,7 +40,7 @@ public sealed class RobotDiscoveryService : IInitialTopicsHandler
     {
         if (_robotDiscoveryTopicPatterns.Any(x => MqttTopicMatcher.IsMatch(topic, x)))
         {
-            var connectionMessage = message.FromJson<Connection>();
+            var connectionMessage = message.FromJson<ConnectionMessage>();
             if (connectionMessage is null)
             {
                 _logger.LogError("Could not deserialize connection message for robot discovery.");
