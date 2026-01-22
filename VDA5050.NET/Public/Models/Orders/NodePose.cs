@@ -11,8 +11,13 @@ public sealed record NodePose(
     double? AllowedDeviationXY,
     double? AllowedDeviationTheta)
 {
-    internal static NodePose FromMessage(NodePositionMessage message)
+    internal static NodePose? FromMessage(NodePositionMessage? message)
     {
+        if (message is null)
+        {
+            return null;
+        }
+
         return new NodePose(
             message.X,
             message.Y,

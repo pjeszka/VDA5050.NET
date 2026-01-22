@@ -2,6 +2,7 @@
 
 public enum OrderStatus
 {
+    Unknown, // -> Temporary
     // In progress
     Pending,
     Canceling,

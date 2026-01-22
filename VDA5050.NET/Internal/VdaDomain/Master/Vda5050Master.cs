@@ -10,7 +10,6 @@ using VDA5050.NET.Public.Exceptions;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
-using VDA5050.NET.Public.Models.RobotDiscovery;
 using VDA5050.NET.Public.Models.Robots;
 using VDA5050.NET.Public.Services;
 
@@ -38,19 +37,24 @@ internal sealed class Vda5050Master : IVda5050Master
         _mqttConnection = mqttConnection;
     }
 
-    public async Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
+    public Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
     {
-        return _operationalRobotRepository.GetRobots().Select(OperationalRobotDetails.FromEntity).ToList();
+        return Task.FromResult<ICollection<OperationalRobotDetails>>(
+            _operationalRobotRepository.GetRobots().Select(OperationalRobotDetails.FromEntity).ToList());
     }
 
     public Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber)
     {
-        return Task.FromResult(DiscoveredRobotDetails.Create(_discoveredRobotRepository.GetRobot(robotSerialNumber))));
+        return Task.FromResult(DiscoveredRobotDetails.Create(_discoveredRobotRepository.GetRobot(robotSerialNumber)));
     }
 
     public Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots()
     {
-        return Task.FromResult(_discoveredRobotRepository.GetDiscoveredRobots().Select(x => DiscoveredRobotDetails.Create(x)).ToList());
+        var robots = _discoveredRobotRepository
+            .GetDiscoveredRobots()
+            .Select(x => DiscoveredRobotDetails.Create(x)!)
+            .ToList();
+        return Task.FromResult<ICollection<DiscoveredRobotDetails>>(robots);
     }
 
     public async Task StartRobotOperation(RobotSettings robotSettings)
@@ -65,6 +69,7 @@ internal sealed class Vda5050Master : IVda5050Master
         connectedRobot.AddConnectionStateChangeHandler(OnRobotConnectionStateChanged);
         connectedRobot.AddStateChangeHandler(OnRobotStateChanged);
         connectedRobot.AddPositionChangeHandler(OnRobotPositionChanged);
+        connectedRobot.AddOrderStateChangeHandler(OnRobotOrderStateChanged);
         _operationalRobotRepository.AddRobot(connectedRobot);
 
         foreach (var topic in connectedRobot.ObservedTopics)
@@ -100,14 +105,14 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotConnectionStateChanged += robotConnectionStateChangedHandler;
     }
 
-    public event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
-
     public void AddRobotStateChangeHandler(EventHandler<RobotStateChangedEvent> robotStateChangedHandler)
     {
         RobotStateChanged += robotStateChangedHandler;
     }
     
-    public event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
+    private event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
+    
+    private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
     
     public void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
     {
@@ -124,7 +129,9 @@ internal sealed class Vda5050Master : IVda5050Master
             throw new RobotNotOperationalException(robotOrderRequest.RobotSerialNumber);
         }
         
-        var robotOrderState = await _robotOrderSender.SendOrder(robot, robotOrderRequest);
+        var orderId = await _robotOrderSender.SendOrder(robot, robotOrderRequest);
+        
+        return orderId;
     }
 
     public async Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
@@ -137,23 +144,45 @@ internal sealed class Vda5050Master : IVda5050Master
             throw new RobotNotOperationalException(robotOrderUpdateRequest.RobotSerialNumber);
         }
         
-        await _robotOrderSender.SendOrderUpdate(robotOrderUpdateRequest);
+        var orderUpdateId = await _robotOrderSender.SendOrderUpdate(robot, robotOrderUpdateRequest);
+        
+        return orderUpdateId;
     }
 
-    public async Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
+    public async Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
     {
         ValidateRobotIsOperational(robotSerialNumber);
         
         // TODO send instant action to cancel order
+        
+        re
     }
 
-    public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
+    public void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler)
+    {
+        RobotOrderStateChanged += robotOrderStateChangedHandler;
+    }
+
+    public void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler)
+    {
+        RobotOrderRequestStateChanged += robotOrderRequestStateChangedHandler;
+    }
+    
     public async Task<ActionId> RequestInstantAction(RobotInstantActionRequest request)
     {
         ValidateRobotIsOperational(request.RobotSerialNumber);
+        
+        // TODO send instant action
     }
 
-    public event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
+    public void AddInstantActionStateChangedHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler)
+    {
+        throw new NotImplementedException();
+    }
+
+    private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
+    private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
+    private event EventHandler<RobotOrderRequestStateChanged> RobotOrderRequestStateChanged;
 
     private void ValidateRobotIsOperational(RobotSerialNumber robotSerialNumber)
     {
@@ -162,6 +191,12 @@ internal sealed class Vda5050Master : IVda5050Master
             _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSerialNumber);
             throw new RobotNotOperationalException(robotSerialNumber);
         }
+    }
+    
+    private void OnRobotOrderStateChanged(object? sender, RobotOrderStateChangedEvent e)
+    {
+        // TODO here check order request - if for any there should be some change of status
+        RobotOrderStateChanged?.Invoke(sender, e);
     }
 
     private void OnRobotPositionChanged(object? sender, RobotPositionChangedEvent e)
@@ -174,7 +209,7 @@ internal sealed class Vda5050Master : IVda5050Master
         _logger.LogDebug(
             "Robot {robotSerialNumber} state changed to {state}",
             e.RobotSerialNumber.Value,
-            e.StateMessage.ToString());
+            e.State.ToString());
         RobotStateChanged?.Invoke(sender, e);
     }
 

@@ -1,3 +1,6 @@
-﻿namespace VDA5050.NET.Public.Events;
+﻿using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Orders.OrderState;
 
-public sealed record RobotOrderStateChangedEvent();
+namespace VDA5050.NET.Public.Events;
+
+public sealed record RobotOrderStateChangedEvent(RobotSerialNumber SerialNumber, RobotOrderState OrderState);

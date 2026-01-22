@@ -3,6 +3,7 @@
 public enum OrderRequestStatus
 {
     Requested,
+    Invalid,
     Sent,
     Rejected,
     Accepted

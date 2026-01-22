@@ -26,10 +26,12 @@ public interface IVda5050Master
     // ordering
     Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest);
     Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest);
-    Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
-    event EventHandler<RobotStateChangedEvent> RobotOrderStateChanged;
-    event EventHandler<RobotOrderRequestStateChanged> RobotOrderRequestStateChanged;
+    Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
+    
+    void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
+    void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler);
     
     // instantActions
     Task<ActionId> RequestInstantAction(RobotInstantActionRequest request);
+    void AddInstantActionStateChangedHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
 }

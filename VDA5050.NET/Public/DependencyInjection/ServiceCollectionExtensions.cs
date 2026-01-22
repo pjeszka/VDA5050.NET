@@ -16,7 +16,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddVda5050Master(
         this IServiceCollection serviceCollection,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ISystemClock systemClock)
     {
         ApplySettings(serviceCollection, configuration);
 
@@ -24,8 +25,8 @@ public static class ServiceCollectionExtensions
             .AddMqtt()
             .AddRobotDiscovery()
             .AddRobotManagement()
-            .AddSingleton<IVda5050Master, Vda5050Master>()
-            .AddSingleton<IRobotOrderSender, RobotOrderSender>();
+            .AddRobotOrders()
+            .AddSingleton<IVda5050Master, Vda5050Master>();
 
         return serviceCollection;
     }

@@ -1,9 +1,10 @@
-﻿using VDA5050.NET.Public.Models.Orders;
+﻿using VDA5050.NET.Internal.VdaDomain.Robots;
+using VDA5050.NET.Public.Models.Orders;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 
-public interface IRobotOrderSender
+internal interface IRobotOrderSender
 {
-    Task<OrderId> SendOrder(RobotOrderRequest robotOrderRequest);
-    Task<OrderUpdateId> SendOrderUpdate(RobotOrderUpdateRequest robotOrderUpdateRequest);
+    Task<OrderId> SendOrder(OperationalRobot operationalRobot, RobotOrderRequest robotOrderRequest);
+    Task<OrderUpdateId> SendOrderUpdate(OperationalRobot operationalRobot, RobotOrderUpdateRequest robotOrderUpdateRequest);
 }

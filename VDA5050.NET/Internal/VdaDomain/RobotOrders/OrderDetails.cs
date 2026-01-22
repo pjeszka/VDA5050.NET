@@ -2,6 +2,7 @@
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
+using VDA5050.NET.Public.Models.Orders.OrderState;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotOrders;
 

@@ -26,11 +26,11 @@ internal sealed class MessageBuilder
             robotOrderRequest);
     }
     
-    public OrderMessage BuildOrderMessage(
+    public OrderMessage BuildOrderUpdateMessage(
         RobotOrderUpdateRequest robotOrderUpdateRequest,
         string robotTopicPrefix,
         DateTime timeStamp,
-        uint orderUpdateId)
+        uint currentOrderUpdateId)
     {
 
         var headerId = GetNextOrderHeaderId(robotOrderUpdateRequest.RobotSerialNumber);
@@ -39,7 +39,7 @@ internal sealed class MessageBuilder
             headerId,
             robotTopicPrefix,
             timeStamp,
-            orderUpdateId,
+            ++currentOrderUpdateId,
             robotOrderUpdateRequest);
     }
     

@@ -6,8 +6,11 @@ using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Con
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
+using VDA5050.NET.Internal.VdaDomain.RobotOrders;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Orders;
+using VDA5050.NET.Public.Models.Orders.OrderState;
 using VDA5050.NET.Public.Models.Robots;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
@@ -27,6 +30,9 @@ internal sealed class OperationalRobot
             $"{settings.RobotTopicPrefix}/factsheet"
         };
 
+        OrderTopic = $"{settings.RobotTopicPrefix}/order";
+        InstanActionTopic = $"{settings.RobotTopicPrefix}/instantAction";
+
         _isObsevingVisualization = settings.ShouldObserveVisualization;
         if (settings.ShouldObserveVisualization)
         {
@@ -36,14 +42,18 @@ internal sealed class OperationalRobot
     
     private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
+    private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
     private event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
     
     public string TopicPrefix { get; }
     public RobotSerialNumber SerialNumber { get; }
     public ICollection<string> ObservedTopics { get; }
+    public string OrderTopic { get; }
+    public string InstanActionTopic { get; }
     public ConnectionState ConnectionState { get; private set; }
     public FactsheetInfo? Factsheet { get; private set; }
     public RobotState? State { get; private set; }
+    public RobotOrderState? OrderState { get; private set; }
     public Pose? Pose { get; private set; }
     
     public bool IsLocalized => Pose is not null;
@@ -58,6 +68,12 @@ internal sealed class OperationalRobot
         EventHandler<RobotStateChangedEvent> robotStateChangedHandler)
     {
         RobotStateChanged += robotStateChangedHandler;
+    }
+    
+    public void AddOrderStateChangeHandler(
+        EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler)
+    {
+        RobotOrderStateChanged += robotOrderStateChangedHandler;
     }
     
     public void AddConnectionStateChangeHandler(
@@ -85,6 +101,27 @@ internal sealed class OperationalRobot
             Pose = Pose.FromMessage(stateMessageMessage.AgvPositionMessage);
         }
 
+        // TODO prepare deciding which order status - finish by adding cancelling
+        // cancelling - if cancellation is pending
+        // cancelled - if received for cancelling action that it is finished
+        // has reached last node -> Finished
+        // none of the above -> Pending
+        var lastNodeState = stateMessageMessage.NodeStates.Last();
+        var isFinished = lastNodeState.NodeId == stateMessageMessage.LastNodeId && lastNodeState.SequenceId == stateMessageMessage.LastNodeSequenceId;
+
+        OrderStatus orderStatus;
+        if (isFinished)
+        {
+            orderStatus = OrderStatus.Finished;
+        }
+        else
+        {
+            orderStatus = OrderStatus.Pending;
+        }
+        OrderState = RobotOrderState.FromRobotStateMessage(stateMessageMessage, orderStatus);
+        RobotOrderStateChanged?.Invoke(
+            this,
+            new RobotOrderStateChangedEvent(SerialNumber, OrderState));
         State = RobotState.FromMessage(stateMessageMessage);
         RobotStateChanged?.Invoke(
             this,
@@ -102,6 +139,11 @@ internal sealed class OperationalRobot
         {
             UpdateRobotPosition(visualizationMessageMessage.AgvPositionMessage);
         }
+    }
+
+    public void InitOrderCancellation(OrderId orderId)
+    {
+        
     }
 
     private void UpdateRobotPosition(AgvPositionMessage positionMessage)

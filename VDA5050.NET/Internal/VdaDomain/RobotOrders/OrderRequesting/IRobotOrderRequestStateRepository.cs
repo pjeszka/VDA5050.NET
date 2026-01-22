@@ -1,12 +1,11 @@
-﻿using VDA5050.NET.Internal.VdaDomain.RobotOrders.RobotOrderState;
-using VDA5050.NET.Public.Models;
+﻿using VDA5050.NET.Public.Models.Orders;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 
 public interface IRobotOrderRequestStateRepository
 {
-    ICollection<CurrentRobotOrderState> GetAll();
-    CurrentRobotOrderState GetForRobot(RobotSerialNumber robotSerialNumber);
-    void AddRobotOrderState(CurrentRobotOrderState robotOrderState);
-    void UpdateRobotOrderState(CurrentRobotOrderState robotOrderState);
+    ICollection<OrderRequestState> GetAll();
+    void AddOrderRequest(OrderRequestState robotOrderState);
+    void UpdateOrderRequestStatus(OrderId orderId, OrderUpdateId orderUpdateId, OrderRequestStatus status);
+    void Clear();
 }
