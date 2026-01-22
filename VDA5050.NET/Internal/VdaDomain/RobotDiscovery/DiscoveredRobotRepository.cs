@@ -4,7 +4,7 @@ using VDA5050.NET.Public.Models.RobotDiscovery;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 
-public sealed class DiscoveredRobotRepository : IDiscoveredRobotRepository
+internal sealed class DiscoveredRobotRepository : IDiscoveredRobotRepository
 {
     private readonly ConcurrentDictionary<RobotSerialNumber, DiscoveredRobot> _robots = new ();
 

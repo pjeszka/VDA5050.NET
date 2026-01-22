@@ -4,63 +4,60 @@ using VDA5050.NET.Public.Models;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
-public sealed class OperationalRobotRepository : IOperationalRobotRepository, ISubscribedTopicsProvider
+internal sealed class OperationalRobotRepository : IOperationalRobotRepository, ISubscribedTopicsProvider
 {
     private readonly ConcurrentDictionary<RobotSerialNumber, OperationalRobot> _robots = new();
 
-    public Task<bool> IsRobotOperational(RobotSerialNumber robotSerialNumber)
+    public bool IsRobotOperational(RobotSerialNumber robotSerialNumber)
     {
         _robots.TryGetValue(robotSerialNumber, out var robot);
         
-        return Task.FromResult(robot is not null);
+        return robot is not null;
     }
 
-    public Task AddRobot(OperationalRobot robot)
+    public void AddRobot(OperationalRobot robot)
     {
         _robots.AddOrUpdate(robot.SerialNumber, robot, (_, _) => robot);
-        return Task.CompletedTask;
     }
 
-    public Task RemoveRobot(RobotSerialNumber robotSerialNumber)
+    public void RemoveRobot(RobotSerialNumber robotSerialNumber)
     {
         _robots.TryRemove(robotSerialNumber, out _);
-        return Task.CompletedTask;
     }
 
-    public Task<OperationalRobot?> GetRobot(RobotSerialNumber robotSerialNumber)
+    public OperationalRobot? GetRobot(RobotSerialNumber robotSerialNumber)
     {
         _robots.TryGetValue(robotSerialNumber, out var robot);
         
-        return Task.FromResult(robot);
+        return robot;
     }
 
-    public Task<ICollection<OperationalRobot>> GetRobots()
+    public ICollection<OperationalRobot> GetRobots()
     {
-        return Task.FromResult(_robots.Values);
+        return _robots.Values;
     }
 
-    public Task<ICollection<string>> GetTopicsForRobot(RobotSerialNumber robotSerialNumber)
+    public ICollection<string> GetTopicsForRobot(RobotSerialNumber robotSerialNumber)
     {
         _robots.TryGetValue(robotSerialNumber, out var robot);
 
-        return Task.FromResult(
-            robot is null ?
+        return robot is null ?
             new List<string>() :
-            robot.ObservedTopics);
+            robot.ObservedTopics;
     }
 
-    public Task<OperationalRobot?> GetRobotForTopic(string topic)
+    public OperationalRobot? GetRobotForTopic(string topic)
     {
         var robot = _robots
             .Select(x => x.Value)
             .FirstOrDefault(x => x.ObservedTopics.Contains(topic));
         
-        return Task.FromResult(robot);
+        return robot;
     }
 
-    public async Task<ICollection<string>> GetTopicsToSubscribe()
+    public ICollection<string> GetTopicsToSubscribe()
     {
-        var robots = await GetRobots();
+        var robots = GetRobots();
         var topics = robots
             .SelectMany(x => x.ObservedTopics)
             .ToList();

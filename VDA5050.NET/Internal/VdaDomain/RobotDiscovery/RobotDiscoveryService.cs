@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using VDA5050.NET.Internal.MQTT.Topics;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
 using VDA5050.NET.Public.DependencyInjection.Settings;

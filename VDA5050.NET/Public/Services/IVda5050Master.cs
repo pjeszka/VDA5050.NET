@@ -1,9 +1,7 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Robots;
-using VDA5050.NET.Public.Events;
+﻿using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
-using VDA5050.NET.Public.Models.RobotDiscovery;
 using VDA5050.NET.Public.Models.Robots;
 
 namespace VDA5050.NET.Public.Services;
@@ -11,12 +9,12 @@ namespace VDA5050.NET.Public.Services;
 public interface IVda5050Master
 {
     // robot discovery
-    Task<DiscoveredRobot?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber);
+    Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber);
     Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots();
     // TODO event about discovering robot
     
     // robot management
-    Task<ICollection<RobotState>> GetOperationalRobots();
+    Task<ICollection<OperationalRobotDetails>> GetOperationalRobots();
     Task StartRobotOperation(RobotSettings robotSettings);
     Task StopRobotOperation(RobotSerialNumber robotSerialNumber);
     

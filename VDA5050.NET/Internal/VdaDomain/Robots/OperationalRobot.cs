@@ -1,10 +1,14 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
+﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Visualization;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Robots;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
@@ -38,12 +42,11 @@ internal sealed class OperationalRobot
     public RobotSerialNumber SerialNumber { get; }
     public ICollection<string> ObservedTopics { get; }
     public ConnectionState ConnectionState { get; private set; }
-    public FactsheetMessage? Factsheet { get; private set; }
-    public StateMessage? State { get; private set; }
-
-    public AgvPosition? Position { get; private set; }
+    public FactsheetInfo? Factsheet { get; private set; }
+    public RobotState? State { get; private set; }
+    public Pose? Pose { get; private set; }
     
-    public bool IsLocalized => Position is not null;
+    public bool IsLocalized => Pose is not null;
     
     public void AddPositionChangeHandler(
         EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
@@ -79,10 +82,10 @@ internal sealed class OperationalRobot
     {
         if (_isObsevingVisualization is false)
         {
-            Position = stateMessageMessage.AgvPosition;
+            Pose = Pose.FromMessage(stateMessageMessage.AgvPositionMessage);
         }
 
-        State = stateMessageMessage;
+        State = RobotState.FromMessage(stateMessageMessage);
         RobotStateChanged?.Invoke(
             this,
             new RobotStateChangedEvent(SerialNumber, State));
@@ -90,24 +93,23 @@ internal sealed class OperationalRobot
     
     public void OnFactsheetMessage(FactsheetMessage factsheetMessageMessage)
     {
-        // TODO: think about refactor
-        Factsheet = factsheetMessageMessage;
+        Factsheet = FactsheetInfo.FromMessage(factsheetMessageMessage);
     }
     
     public void OnVisualizationMessage(VisualizationMessage visualizationMessageMessage)
     {
         if (_isObsevingVisualization)
         {
-            UpdateRobotPosition(visualizationMessageMessage.AgvPosition);
+            UpdateRobotPosition(visualizationMessageMessage.AgvPositionMessage);
         }
     }
 
-    private void UpdateRobotPosition(AgvPosition position)
+    private void UpdateRobotPosition(AgvPositionMessage positionMessage)
     {
-        Position = position;
+        Pose = Pose.FromMessage(positionMessage);
         RobotPositionChanged?.Invoke(
             this,
-            new RobotPositionChangedEvent(SerialNumber, Position.X, Position.Y, Position.Theta));
+            new RobotPositionChangedEvent(SerialNumber, Pose.X, Pose.Y, Pose.Theta));
     }
 
 }

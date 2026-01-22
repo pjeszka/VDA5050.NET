@@ -1,8 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
 using VDA5050.NET.Internal.MQTT;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Order;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Order;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Exceptions;
 using VDA5050.NET.Public.Models;
@@ -49,6 +50,7 @@ public sealed class RobotOrderSender : IRobotOrderSender
         var topic = CreateOrderTopicForRobot(robot);
 
 
+        
         var orderMessage = OrderMessage.CreateNewOrderMessage(
             currentOrderHeaderId,
             robot.TopicPrefix,

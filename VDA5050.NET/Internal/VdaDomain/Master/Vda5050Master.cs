@@ -11,11 +11,12 @@ using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.RobotDiscovery;
+using VDA5050.NET.Public.Models.Robots;
 using VDA5050.NET.Public.Services;
 
 namespace VDA5050.NET.Internal.VdaDomain.Master;
 
-public sealed class Vda5050Master : IVda5050Master
+internal sealed class Vda5050Master : IVda5050Master
 {
     private readonly IDiscoveredRobotRepository _discoveredRobotRepository;
     private readonly IOperationalRobotRepository _operationalRobotRepository;
@@ -37,24 +38,24 @@ public sealed class Vda5050Master : IVda5050Master
         _mqttConnection = mqttConnection;
     }
 
-    public Task<ICollection<OperationalRobot>> GetOperationalRobots()
+    public async Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
     {
-        return _operationalRobotRepository.GetRobots();
+        return _operationalRobotRepository.GetRobots().Select(OperationalRobotDetails.FromEntity).ToList();
     }
 
-    public Task<DiscoveredRobot?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber)
+    public Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber)
     {
-        return Task.FromResult(_discoveredRobotRepository.GetRobot(robotSerialNumber));
+        return Task.FromResult(DiscoveredRobotDetails.Create(_discoveredRobotRepository.GetRobot(robotSerialNumber))));
     }
 
-    public Task<ICollection<DiscoveredRobot>> GetAccessibleRobots()
+    public Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots()
     {
-        return Task.FromResult(_discoveredRobotRepository.GetDiscoveredRobots());
+        return Task.FromResult(_discoveredRobotRepository.GetDiscoveredRobots().Select(x => DiscoveredRobotDetails.Create(x)).ToList());
     }
 
     public async Task StartRobotOperation(RobotSettings robotSettings)
     {
-        if (await _operationalRobotRepository.IsRobotOperational(robotSettings.RobotSerialNumber))
+        if (_operationalRobotRepository.IsRobotOperational(robotSettings.RobotSerialNumber))
         {
             _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSettings.RobotSerialNumber.Value);
             return;
@@ -64,7 +65,7 @@ public sealed class Vda5050Master : IVda5050Master
         connectedRobot.AddConnectionStateChangeHandler(OnRobotConnectionStateChanged);
         connectedRobot.AddStateChangeHandler(OnRobotStateChanged);
         connectedRobot.AddPositionChangeHandler(OnRobotPositionChanged);
-        await _operationalRobotRepository.AddRobot(connectedRobot);
+        _operationalRobotRepository.AddRobot(connectedRobot);
 
         foreach (var topic in connectedRobot.ObservedTopics)
         {
@@ -77,7 +78,7 @@ public sealed class Vda5050Master : IVda5050Master
 
     public async Task StopRobotOperation(RobotSerialNumber robotSerialNumber)
     {
-        var robot = await _operationalRobotRepository.GetRobot(robotSerialNumber);
+        var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
 
         if (robot is null)
         {
@@ -90,7 +91,7 @@ public sealed class Vda5050Master : IVda5050Master
             await _mqttConnection.RemoveSubscription(topic);
         }
 
-        await _operationalRobotRepository.RemoveRobot(robotSerialNumber);
+        _operationalRobotRepository.RemoveRobot(robotSerialNumber);
         _logger.LogInformation("Robot {robotSerialNumber} was removed from operation.", robotSerialNumber.Value);
     }
 
@@ -113,11 +114,11 @@ public sealed class Vda5050Master : IVda5050Master
         RobotPositionChanged += robotPositionChangedHandler;
     }
 
-    public async Task SendRobotOrder(RobotOrderRequest robotOrderRequest)
+    public async Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest)
     {
-        await ValidateRobotIsOperational(robotOrderRequest.RobotSerialNumber);
+        ValidateRobotIsOperational(robotOrderRequest.RobotSerialNumber);
         
-        var robot = await _operationalRobotRepository.GetRobot(robotOrderRequest.RobotSerialNumber);
+        var robot = _operationalRobotRepository.GetRobot(robotOrderRequest.RobotSerialNumber);
         if (robot is null)
         {
             throw new RobotNotOperationalException(robotOrderRequest.RobotSerialNumber);
@@ -126,11 +127,11 @@ public sealed class Vda5050Master : IVda5050Master
         var robotOrderState = await _robotOrderSender.SendOrder(robot, robotOrderRequest);
     }
 
-    public async Task UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
+    public async Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
     {
-        await ValidateRobotIsOperational(robotOrderUpdateRequest.RobotSerialNumber);
+        ValidateRobotIsOperational(robotOrderUpdateRequest.RobotSerialNumber);
         
-        var robot = await _operationalRobotRepository.GetRobot(robotOrderUpdateRequest.RobotSerialNumber);
+        var robot = _operationalRobotRepository.GetRobot(robotOrderUpdateRequest.RobotSerialNumber);
         if (robot is null)
         {
             throw new RobotNotOperationalException(robotOrderUpdateRequest.RobotSerialNumber);
@@ -141,22 +142,22 @@ public sealed class Vda5050Master : IVda5050Master
 
     public async Task CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
     {
-        await ValidateRobotIsOperational(robotSerialNumber);
+        ValidateRobotIsOperational(robotSerialNumber);
         
         // TODO send instant action to cancel order
     }
 
     public event EventHandler<RobotStateChangedEvent>? RobotOrderStateChanged;
-    public async Task RequestInstantAction(RobotInstantActionRequest request)
+    public async Task<ActionId> RequestInstantAction(RobotInstantActionRequest request)
     {
-        await ValidateRobotIsOperational(request.RobotSerialNumber);
+        ValidateRobotIsOperational(request.RobotSerialNumber);
     }
 
     public event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
 
-    private async Task ValidateRobotIsOperational(RobotSerialNumber robotSerialNumber)
+    private void ValidateRobotIsOperational(RobotSerialNumber robotSerialNumber)
     {
-        if (await _operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
+        if (_operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
         {
             _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSerialNumber);
             throw new RobotNotOperationalException(robotSerialNumber);
@@ -173,7 +174,7 @@ public sealed class Vda5050Master : IVda5050Master
         _logger.LogDebug(
             "Robot {robotSerialNumber} state changed to {state}",
             e.RobotSerialNumber.Value,
-            e.StateMessage.ToJson());
+            e.StateMessage.ToString());
         RobotStateChanged?.Invoke(sender, e);
     }
 

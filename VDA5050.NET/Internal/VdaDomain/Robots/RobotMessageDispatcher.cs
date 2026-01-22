@@ -1,11 +1,15 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VDA5050.NET.Internal.MQTT;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Visualization;
 using VDA5050.NET.Internal.VdaDomain.Messages.Topics;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
@@ -29,7 +33,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
         
         var robotRepository = scope.ServiceProvider.GetRequiredService<IOperationalRobotRepository>();
         
-        var robot = await robotRepository.GetRobotForTopic(topic);
+        var robot = robotRepository.GetRobotForTopic(topic);
         if (robot is null)
         {
             return;

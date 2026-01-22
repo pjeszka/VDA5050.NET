@@ -3,8 +3,8 @@
 public sealed record RobotOrderRequest
 {
     public RobotOrderRequest(RobotSerialNumber robotSerialNumber,
-        List<NodeDto> nodes,
-        List<EdgeDto> edges,
+        List<Node> nodes,
+        List<Edge> edges,
         string? zoneSetId = null)
     {
         RobotSerialNumber = robotSerialNumber;
@@ -19,8 +19,8 @@ public sealed record RobotOrderUpdateRequest
 {
     public RobotOrderUpdateRequest(RobotSerialNumber robotSerialNumber,
         OrderId orderId,
-        List<NodeDto> nodes,
-        List<EdgeDto> edges,
+        List<Node> nodes,
+        List<Edge> edges,
         string? zoneSetId = null)
     {
         RobotSerialNumber = robotSerialNumber;
@@ -30,6 +30,6 @@ public sealed record RobotOrderUpdateRequest
     public OrderRequest Request { get; }
 }
 
-public record OrderRequest(OrderId? OrderId, List<NodeDto> Nodes, List<EdgeDto> Edges, string? ZoneSetId = null);
+public record OrderRequest(OrderId? OrderId, List<Node> Nodes, List<Edge> Edges, string? ZoneSetId = null);
 
 

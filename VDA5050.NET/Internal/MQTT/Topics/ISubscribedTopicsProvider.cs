@@ -2,5 +2,5 @@
 
 public interface ISubscribedTopicsProvider
 {
-    Task<ICollection<string>> GetTopicsToSubscribe();
+    ICollection<string> GetTopicsToSubscribe();
 }

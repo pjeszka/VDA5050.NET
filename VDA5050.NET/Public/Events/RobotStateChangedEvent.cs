@@ -4,4 +4,4 @@ using VDA5050.NET.Public.Models.Robots;
 
 namespace VDA5050.NET.Public.Events;
 
-public sealed record RobotStateChangedEvent(RobotSerialNumber RobotSerialNumber, RobotState StateMessage);
+public sealed record RobotStateChangedEvent(RobotSerialNumber RobotSerialNumber, RobotState State);

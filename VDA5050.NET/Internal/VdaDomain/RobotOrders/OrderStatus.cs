@@ -3,17 +3,10 @@
 public enum OrderStatus
 {
     // In progress
-    Requested,
-    Send,
     Pending,
     Canceling,
     // Has ended
-    Rejected,
-    Invalid,
     Failed,
     Canceled,
     Finished 
-    
-    
-
 }

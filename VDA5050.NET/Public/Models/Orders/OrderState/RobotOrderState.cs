@@ -1,4 +1,6 @@
-﻿namespace VDA5050.NET.Public.Models.Orders.OrderState;
+﻿using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+
+namespace VDA5050.NET.Public.Models.Orders.OrderState;
 
 public record RobotOrderState(
     RobotSerialNumber RobotSerialNumber,
@@ -8,5 +10,5 @@ public record RobotOrderState(
     uint LastNodeSequenceId,
     ICollection<EdgeState> EdgeState,
     ICollection<NodeState> NodeState,
-    ICollection<ActionState> ActionStates
-    RobotOrderStatus );
+    ICollection<ActionState> ActionStates,
+    OrderStatus Status);

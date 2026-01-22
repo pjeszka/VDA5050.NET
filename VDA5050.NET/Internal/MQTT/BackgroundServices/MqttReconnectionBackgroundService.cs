@@ -42,7 +42,7 @@ internal sealed class MqttReconnectionBackgroundService : BackgroundService
                     using var scope = _serviceScope.CreateScope();
                     var topicsProvider = scope.ServiceProvider
                         .GetRequiredService<ISubscribedTopicsProvider>();
-                    var topicsToSubscribe = await topicsProvider.GetTopicsToSubscribe();
+                    var topicsToSubscribe = topicsProvider.GetTopicsToSubscribe();
                     foreach (var topic in topicsToSubscribe)
                     {
                         if (_connection.HasSubscriber(topic) is false)
