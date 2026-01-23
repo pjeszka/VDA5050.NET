@@ -1,12 +1,12 @@
 ﻿namespace VDA5050.NET.Internal.VdaDomain.Messages;
 
 // TODO when received for the first time this should store it and then check if there was message before
-public class ReceivedMessagesHeaders
+internal class ReceivedMessagesHeaders
 {
-    private uint? _stateHeaderId = null;
-    private uint? _connectionHeaderId = null;
-    private uint? _factsheetHeaderId = null;
-    private uint? _visualizationHeaderId = null;
+    public uint? StateHeaderId { get; private set; } = null;
+    public uint? ConnectionHeaderId { get; private set; } = null;
+    public uint? FactsheetHeaderId { get; private set; } = null;
+    public uint? VisualizationHeaderId { get; private set; } = null;
 
     /// <summary>
     /// If return false then header is from the past
@@ -16,19 +16,24 @@ public class ReceivedMessagesHeaders
     /// <returns></returns>
     public bool TryUpdateStateHeaderId(uint headerId)
     {
-        if (_stateHeaderId.HasValue is false)
+        if (StateHeaderId.HasValue is false)
         {
-            _stateHeaderId = headerId;
+            StateHeaderId = headerId;
             return true;
         }
 
-        if (_stateHeaderId.Value < headerId)
+        if (StateHeaderId.Value < headerId)
         {
-            _stateHeaderId = headerId;
+            StateHeaderId = headerId;
             return true;
         }
 
         // header id is from the past
+        if (headerId == uint.MinValue || StateHeaderId.Value == uint.MaxValue)
+        {
+            StateHeaderId = null;
+        }
+        
         return false;
     }
     
@@ -40,19 +45,24 @@ public class ReceivedMessagesHeaders
     /// <returns></returns>
     public bool TryUpdateConnectionHeaderId(uint headerId)
     {
-        if (_connectionHeaderId.HasValue is false)
+        if (ConnectionHeaderId.HasValue is false)
         {
-            _connectionHeaderId = headerId;
+            ConnectionHeaderId = headerId;
             return true;
         }
 
-        if (_connectionHeaderId.Value < headerId)
+        if (ConnectionHeaderId.Value < headerId)
         {
-            _connectionHeaderId = headerId;
+            ConnectionHeaderId = headerId;
             return true;
         }
 
         // header id is from the past
+        if (headerId == uint.MinValue || ConnectionHeaderId.Value == uint.MaxValue)
+        {
+            ConnectionHeaderId = null;
+        }
+        
         return false;
     }
     
@@ -65,19 +75,53 @@ public class ReceivedMessagesHeaders
     /// <returns></returns>
     public bool TryUpdateFactsheetHeaderId(uint headerId)
     {
-        if (_factsheetHeaderId.HasValue is false)
+        if (FactsheetHeaderId.HasValue is false)
         {
-            _factsheetHeaderId = headerId;
+            FactsheetHeaderId = headerId;
             return true;
         }
 
-        if (_factsheetHeaderId.Value < headerId)
+        if (FactsheetHeaderId.Value < headerId)
         {
-            _factsheetHeaderId = headerId;
+            FactsheetHeaderId = headerId;
             return true;
         }
 
         // header id is from the past
+        if (headerId == uint.MinValue || FactsheetHeaderId.Value == uint.MaxValue)
+        {
+            FactsheetHeaderId = null;
+        }
+
+        return false;
+    }
+    
+    /// <summary>
+    /// If return false then header is from the past
+    /// This can mean here that robot was restarted - and starts iterating from the beginning
+    /// </summary>
+    /// <param name="headerId"></param>
+    /// <returns></returns>
+    public bool TryUpdateVisualizationHeaderId(uint headerId)
+    {
+        if (VisualizationHeaderId.HasValue is false)
+        {
+            VisualizationHeaderId = headerId;
+            return true;
+        }
+
+        if (VisualizationHeaderId.Value < headerId)
+        {
+            VisualizationHeaderId = headerId;
+            return true;
+        }
+
+        // header id is from the past
+        if (headerId == uint.MinValue || VisualizationHeaderId.Value == uint.MaxValue)
+        {
+            VisualizationHeaderId = null;
+        }
+        
         return false;
     }
 }

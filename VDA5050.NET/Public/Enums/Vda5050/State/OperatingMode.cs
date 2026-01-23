@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State.Enums;
+namespace VDA5050.NET.Public.Enums.Vda5050.State;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OperatingMode

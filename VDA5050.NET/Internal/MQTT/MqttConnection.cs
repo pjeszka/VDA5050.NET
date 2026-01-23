@@ -6,10 +6,11 @@ using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Protocol;
 using VDA5050.NET.Internal.MQTT.Topics;
 using VDA5050.NET.Public.DependencyInjection.Settings;
+using VDA5050.NET.Public.Models.MQTT;
 
 namespace VDA5050.NET.Internal.MQTT;
 
-public sealed class MqttConnection : IMqttConnection
+internal  sealed class MqttConnection : IMqttConnection
 {
     private const string ClientId = "vda5050_master";
     private readonly IManagedMqttClient _client;

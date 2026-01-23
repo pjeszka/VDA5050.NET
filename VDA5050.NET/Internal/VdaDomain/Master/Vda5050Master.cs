@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using VDA5050.NET.Internal.MQTT;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
+using VDA5050.NET.Internal.VdaDomain.InstantActions;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
+using VDA5050.NET.Public.Enums.Vda5050.State;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Exceptions;
 using VDA5050.NET.Public.Models;
@@ -12,6 +13,7 @@ using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Robots;
 using VDA5050.NET.Public.Services;
+using Action = VDA5050.NET.Public.Models.InstantActions.Action;
 
 namespace VDA5050.NET.Internal.VdaDomain.Master;
 
@@ -21,20 +23,32 @@ internal sealed class Vda5050Master : IVda5050Master
     private readonly IOperationalRobotRepository _operationalRobotRepository;
     private readonly IMqttConnection _mqttConnection;
     private readonly IRobotOrderSender _robotOrderSender;
+    private readonly IRobotInstantActionsSender _robotInstantActionsSender;
+    private readonly IRobotOrderRequestStateRepository _robotOrderRequestStateRepository;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ISystemClock _systemClock;
     private readonly ILogger<Vda5050Master> _logger;
 
     public Vda5050Master(
         IDiscoveredRobotRepository discoveredRobotRepository,
         IOperationalRobotRepository operationalRobotRepository,
         IMqttConnection mqttConnection,
+        IRobotOrderSender robotOrderSender,
+        IRobotInstantActionsSender robotInstantActionsSender,
         ILogger<Vda5050Master> logger,
-        IRobotOrderSender robotOrderSender)
+        ILoggerFactory loggerFactory,
+        IRobotOrderRequestStateRepository robotOrderRequestStateRepository,
+        ISystemClock systemClock)
     {
         _discoveredRobotRepository = discoveredRobotRepository;
         _operationalRobotRepository = operationalRobotRepository;
-        _logger = logger;
         _robotOrderSender = robotOrderSender;
+        _robotInstantActionsSender = robotInstantActionsSender;
         _mqttConnection = mqttConnection;
+        _logger = logger;
+        _loggerFactory = loggerFactory;
+        _robotOrderRequestStateRepository = robotOrderRequestStateRepository;
+        _systemClock = systemClock;
     }
 
     public Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
@@ -65,7 +79,8 @@ internal sealed class Vda5050Master : IVda5050Master
             return;
         }
 
-        var connectedRobot = new OperationalRobot(robotSettings);
+        var robotLogger = _loggerFactory.CreateLogger($"Robot-{robotSettings.RobotSerialNumber.Value}");
+        var connectedRobot = new OperationalRobot(robotSettings, robotLogger);
         connectedRobot.AddConnectionStateChangeHandler(OnRobotConnectionStateChanged);
         connectedRobot.AddStateChangeHandler(OnRobotStateChanged);
         connectedRobot.AddPositionChangeHandler(OnRobotPositionChanged);
@@ -121,41 +136,139 @@ internal sealed class Vda5050Master : IVda5050Master
 
     public async Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest)
     {
-        ValidateRobotIsOperational(robotOrderRequest.RobotSerialNumber);
-        
         var robot = _operationalRobotRepository.GetRobot(robotOrderRequest.RobotSerialNumber);
         if (robot is null)
         {
             throw new RobotNotOperationalException(robotOrderRequest.RobotSerialNumber);
         }
+        var orderId = new OrderId(Guid.NewGuid().ToString());
+        SetOrderRequestStatus(orderId, robotOrderRequest, OrderRequestStatus.Requested);
+
+        try
+        {
+            await _robotOrderSender.SendOrder(robot, robotOrderRequest, orderId);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error while sending order");
+            SetOrderRequestStatus(orderId, robotOrderRequest, OrderRequestStatus.Invalid, e.Message);
+            throw;
+        }
         
-        var orderId = await _robotOrderSender.SendOrder(robot, robotOrderRequest);
+        SetOrderRequestStatus(orderId, robotOrderRequest, OrderRequestStatus.Sent);
         
         return orderId;
     }
 
+    private void SetOrderRequestStatus(
+        OrderId orderId,
+        RobotOrderRequest robotOrderRequest,
+        OrderRequestStatus status,
+        string? message = null)
+    {
+        if (status == OrderRequestStatus.Requested)
+        {
+            var orderRequestState = new OrderRequestState(orderId, robotOrderRequest);
+            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
+        }
+        else
+        {
+            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
+            var orderUpdateId = new OrderUpdateId(0);
+            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(orderId, orderUpdateId, status, message, sentTimeStamp);
+            RobotOrderRequestStateChanged.Invoke(this, new RobotOrderRequestStateChanged(
+                robotOrderRequest.RobotSerialNumber,
+                orderId,
+                orderUpdateId,
+                status,
+                message));
+        }
+    }
+
     public async Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
     {
-        ValidateRobotIsOperational(robotOrderUpdateRequest.RobotSerialNumber);
-        
         var robot = _operationalRobotRepository.GetRobot(robotOrderUpdateRequest.RobotSerialNumber);
         if (robot is null)
         {
             throw new RobotNotOperationalException(robotOrderUpdateRequest.RobotSerialNumber);
         }
         
-        var orderUpdateId = await _robotOrderSender.SendOrderUpdate(robot, robotOrderUpdateRequest);
+        var currentOrderUpdateId = robot.OrderState?.OrderUpdateId ?? new OrderUpdateId(0);
+
+        var newOrderUpdateId = new OrderUpdateId(currentOrderUpdateId.Value + 1);
+        SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Requested);
+
+        if (robot.OrderState?.OrderId != robotOrderUpdateRequest.Request.OrderId)
+        {
+            const string messageFormat = "Cannot update order. Robot {0} is not assigned to order {1}. Its current order id is {2}.";
+            var message = string.Format(messageFormat, robot.SerialNumber.Value, robotOrderUpdateRequest.Request.OrderId, robot.OrderState?.OrderId);
+            SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Invalid, message);
+            throw new InvalidOperationException(message);
+        }
+
+        try
+        {
+            await _robotOrderSender.SendOrderUpdate(robot, robotOrderUpdateRequest, newOrderUpdateId);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error while sending order update");
+            SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Invalid, e.Message);
+            throw;
+        }
         
-        return orderUpdateId;
+        SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Sent);
+        return newOrderUpdateId;
+    }
+    
+    private void SetOrderUpdateRequestStatus(
+        OrderUpdateId orderUpdateId,
+        RobotOrderUpdateRequest robotOrderUpdateRequest,
+        OrderRequestStatus status,
+        string? message = null)
+    {
+        if (status == OrderRequestStatus.Requested)
+        {
+            var orderRequestState = new OrderRequestState(orderUpdateId, robotOrderUpdateRequest);
+            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
+        }
+        else
+        {
+            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
+            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
+                robotOrderUpdateRequest.Request.OrderId!,
+                orderUpdateId,
+                status,
+                message,
+                sentTimeStamp);
+            RobotOrderRequestStateChanged.Invoke(this, new RobotOrderRequestStateChanged(
+                robotOrderUpdateRequest.RobotSerialNumber,
+                robotOrderUpdateRequest.Request.OrderId!,
+                orderUpdateId,
+                status,
+                message));
+        }
     }
 
     public async Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
     {
-        ValidateRobotIsOperational(robotSerialNumber);
+        var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(robotSerialNumber);
+        }
+
+        var cancelActionId = ActionId.New();
+        var actionList = new List<Action>()
+        {
+            new(ActionId.New(), SpecificInstantActionTypes.CancelOrder, BlockingType.NONE, new List<Parameter>())
+        };
+        await _robotInstantActionsSender.SendInstantAction(robot,
+            new RobotInstantActionRequest(robotSerialNumber, actionList));
         
-        // TODO send instant action to cancel order
+        robot.InitOrderCancellation(orderId, cancelActionId);
         
-        re
+        return cancelActionId;
     }
 
     public void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler)
@@ -168,35 +281,80 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotOrderRequestStateChanged += robotOrderRequestStateChangedHandler;
     }
     
-    public async Task<ActionId> RequestInstantAction(RobotInstantActionRequest request)
+    public async Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request)
     {
-        ValidateRobotIsOperational(request.RobotSerialNumber);
+        var robot = _operationalRobotRepository.GetRobot(request.RobotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(request.RobotSerialNumber);
+        }
         
-        // TODO send instant action
+        var actionIds = await _robotInstantActionsSender.SendInstantAction(robot, request);
+        
+        return actionIds;
     }
 
-    public void AddInstantActionStateChangedHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler)
+    public void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler)
     {
-        throw new NotImplementedException();
+        RobotInstantActionStateChanged += robotOrderStateChangedHandler;
     }
 
     private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
     private event EventHandler<RobotOrderRequestStateChanged> RobotOrderRequestStateChanged;
-
-    private void ValidateRobotIsOperational(RobotSerialNumber robotSerialNumber)
-    {
-        if (_operationalRobotRepository.IsRobotOperational(robotSerialNumber) is false)
-        {
-            _logger.LogWarning("Robot {robotSerialNumber} operation is already started.", robotSerialNumber);
-            throw new RobotNotOperationalException(robotSerialNumber);
-        }
-    }
+    private event EventHandler<RobotInstantActionStateChanged> RobotInstantActionStateChanged;
     
     private void OnRobotOrderStateChanged(object? sender, RobotOrderStateChangedEvent e)
     {
-        // TODO here check order request - if for any there should be some change of status
         RobotOrderStateChanged?.Invoke(sender, e);
+        
+        // checking order requests
+        _robotOrderRequestStateRepository.Clear();
+        var waitingOrderRequestStates = _robotOrderRequestStateRepository
+            .GetAllForRobot(e.SerialNumber)
+            .Where(x => x.Status == OrderRequestStatus.Sent)
+            .ToList();
+ 
+        foreach (var waitingOrderRequestState in waitingOrderRequestStates)
+        {
+            if (waitingOrderRequestState.Id.OrderId == e.OrderState.OrderId &&
+                waitingOrderRequestState.Id.OrderUpdateId == e.OrderState.OrderUpdateId)
+            {
+                RobotOrderRequestStateChanged.Invoke(
+                    this,
+                    new RobotOrderRequestStateChanged(
+                        e.SerialNumber,
+                        waitingOrderRequestState.Id.OrderId,
+                        waitingOrderRequestState.Id.OrderUpdateId,
+                        OrderRequestStatus.Accepted));
+                _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
+                    waitingOrderRequestState.Id.OrderId,
+                    waitingOrderRequestState.Id.OrderUpdateId,
+                    OrderRequestStatus.Accepted);
+            }
+            else if(_systemClock.Now - waitingOrderRequestState.SentAt > TimeSpan.FromSeconds(10))
+            {
+                const string message = "Timeout while waiting for order confirmation";
+                RobotOrderRequestStateChanged.Invoke(
+                    this,
+                    new RobotOrderRequestStateChanged(
+                        e.SerialNumber,
+                        waitingOrderRequestState.Id.OrderId,
+                        waitingOrderRequestState.Id.OrderUpdateId,
+                        OrderRequestStatus.Rejected,
+                        message));
+                _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
+                    waitingOrderRequestState.Id.OrderId,
+                    waitingOrderRequestState.Id.OrderUpdateId,
+                    OrderRequestStatus.Rejected,
+                    message);
+            }
+        }
+        
+        // TODO checking instantAction requests
+        // 1. keep track of instantAction requests
+        // 2. check if instantAction status has changed
+        
     }
 
     private void OnRobotPositionChanged(object? sender, RobotPositionChangedEvent e)

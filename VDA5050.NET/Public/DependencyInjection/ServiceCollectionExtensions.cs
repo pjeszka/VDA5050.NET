@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.MQTT.BackgroundServices;
+using VDA5050.NET.Internal.System;
 using VDA5050.NET.Internal.VdaDomain.Master;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
@@ -17,9 +18,18 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddVda5050Master(
         this IServiceCollection serviceCollection,
         IConfiguration configuration,
-        ISystemClock systemClock)
+        ISystemClock? systemClock = null)
     {
         ApplySettings(serviceCollection, configuration);
+
+        if (systemClock is not null)
+        {
+            serviceCollection.AddSingleton<ISystemClock>(systemClock);
+        }
+        else
+        {
+            serviceCollection.AddSingleton<ISystemClock, UtcSystemClock>();
+        }
 
         serviceCollection
             .AddMqtt()

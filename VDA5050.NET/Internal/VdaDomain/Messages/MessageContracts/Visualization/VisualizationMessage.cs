@@ -3,7 +3,7 @@ using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
 
 namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
 
-internal class VisualizationMessage
+internal class VisualizationMessage : Header
 {
     [JsonPropertyName("agvPosition")]
     public AgvPositionMessage AgvPositionMessage { get; set; }

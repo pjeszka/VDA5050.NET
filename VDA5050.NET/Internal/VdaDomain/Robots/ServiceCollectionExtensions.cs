@@ -4,7 +4,7 @@ using VDA5050.NET.Internal.MQTT.Topics;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
-public static class ServiceCollectionExtensions
+internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddRobotManagement(this IServiceCollection serviceCollection)
     {

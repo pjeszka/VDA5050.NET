@@ -1,6 +1,6 @@
 ﻿namespace VDA5050.NET.Internal.MQTT.Topics;
 
-public interface ISubscribedTopicsProvider
+internal interface ISubscribedTopicsProvider
 {
     ICollection<string> GetTopicsToSubscribe();
 }

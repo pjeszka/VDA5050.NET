@@ -1,6 +1,6 @@
 ﻿namespace VDA5050.NET.Internal.MQTT.Topics;
 
-public static class MqttTopicMatcher
+internal static class MqttTopicMatcher
 {
     public static bool IsMatch(string topic, string pattern)
     {

@@ -6,22 +6,18 @@ using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.Messages.Topics;
 
 namespace VDA5050.NET.Internal.VdaDomain.Robots;
 
-public class RobotMessageDispatcher : IMessageDispatcher
+internal class RobotMessageDispatcher : IMessageDispatcher
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<IMessageDispatcher> _logger;
 
     public RobotMessageDispatcher(
         IServiceProvider serviceProvider,
-        ILogger<IMessageDispatcher> logger)
+        ILogger<RobotMessageDispatcher> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -54,6 +50,7 @@ public class RobotMessageDispatcher : IMessageDispatcher
                     _logger.LogError("Could not deserialize state message for robot {robotId}", robot.SerialNumber);
                     break;
                 }
+                
                 robot.OnStateMessage(stateMessage);
                 break;
             case TopicType.Connection:

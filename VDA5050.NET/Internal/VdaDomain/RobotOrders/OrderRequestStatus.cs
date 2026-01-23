@@ -2,9 +2,11 @@
 
 public enum OrderRequestStatus
 {
+    // In progress
     Requested,
-    Invalid,
     Sent,
+    // Has ended
+    Invalid,
     Rejected,
     Accepted
 }

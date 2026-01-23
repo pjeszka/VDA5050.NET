@@ -3,7 +3,7 @@ using VDA5050.NET.Internal.MQTT.Topics;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 
-public static class ServiceCollectionExtensions
+internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddRobotDiscovery(this IServiceCollection serviceCollection)
     {

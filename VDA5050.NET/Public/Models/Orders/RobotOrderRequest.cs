@@ -2,7 +2,8 @@
 
 public sealed record RobotOrderRequest
 {
-    public RobotOrderRequest(RobotSerialNumber robotSerialNumber,
+    public RobotOrderRequest(
+        RobotSerialNumber robotSerialNumber,
         List<Node> nodes,
         List<Edge> edges,
         string? zoneSetId = null)

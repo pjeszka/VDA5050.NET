@@ -32,6 +32,6 @@ public interface IVda5050Master
     void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler);
     
     // instantActions
-    Task<ActionId> RequestInstantAction(RobotInstantActionRequest request);
-    void AddInstantActionStateChangedHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
+    Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request);
+    void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler);
 }

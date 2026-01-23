@@ -1,4 +1,4 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
+﻿using VDA5050.NET.Public.Enums.Vda5050.Connection;
 
 namespace VDA5050.NET.Public.Models.RobotDiscovery;
 

@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet.Enums;
+using VDA5050.NET.Public.Enums.Vda5050.Order;
 
 namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
 

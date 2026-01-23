@@ -1,5 +1,4 @@
 ﻿using System.Text.Json.Serialization;
-using VDA5050.NET.Public.Models.InstantActions;
 using Action = VDA5050.NET.Public.Models.InstantActions.Action;
 
 namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Order;
@@ -22,7 +21,7 @@ internal class ActionItemMessage
     {
         var actionItem = new ActionItemMessage()
         {
-            ActionId = action.Id,
+            ActionId = action.Id.Value,
             ActionType = action.ActionType,
             BlockingType = action.BlockingType.ToString(),
             ActionParameters = action.ActionParameters

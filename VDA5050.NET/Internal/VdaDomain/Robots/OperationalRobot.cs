@@ -1,12 +1,11 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
+﻿using Microsoft.Extensions.Logging;
+using VDA5050.NET.Internal.VdaDomain.Messages;
+using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Connection;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Connection.Enums;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet;
-using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+using VDA5050.NET.Public.Enums.Vda5050.Connection;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.Orders;
@@ -18,9 +17,15 @@ namespace VDA5050.NET.Internal.VdaDomain.Robots;
 internal sealed class OperationalRobot
 {
     private readonly bool _isObsevingVisualization;
+    private readonly ReceivedMessagesHeaders _receivedMessagesHeaders = new ();
+    private readonly ILogger? _logger;
+    private OrderCancellingChecker? _orderCancellingChecker;
+
     public OperationalRobot(
-        RobotSettings settings)
+        RobotSettings settings,
+        ILogger? logger = null)
     {
+        _logger = logger;
         TopicPrefix = settings.RobotTopicPrefix;
         SerialNumber = settings.RobotSerialNumber;
         ObservedTopics = new List<string>()
@@ -52,6 +57,7 @@ internal sealed class OperationalRobot
     public string InstanActionTopic { get; }
     public ConnectionState ConnectionState { get; private set; }
     public FactsheetInfo? Factsheet { get; private set; }
+    public FactsheetProtocolInfo? FactsheetProtocolInfo { get; private set; }
     public RobotState? State { get; private set; }
     public RobotOrderState? OrderState { get; private set; }
     public Pose? Pose { get; private set; }
@@ -82,68 +88,103 @@ internal sealed class OperationalRobot
         RobotConnectionStateChanged += robotConnectionStateChangedHandler;
     }
 
-    internal void OnConnectionMessage(ConnectionMessage connectionMessageMessage)
+    internal void OnConnectionMessage(ConnectionMessage connectionMessage)
     {
-        if (connectionMessageMessage.ConnectionState != ConnectionState)
+        if (_receivedMessagesHeaders.TryUpdateConnectionHeaderId(connectionMessage.HeaderId) is false)
+        {
+            _logger?.LogWarning(
+                "Received {message type} message with header id from the past. Received header id: {headerId} while current header id: {currentHeaderId}",
+                nameof(ConnectionMessage),
+                connectionMessage.HeaderId,
+                _receivedMessagesHeaders.ConnectionHeaderId!.Value);
+        }
+
+        if (connectionMessage.ConnectionState != ConnectionState)
         {
             var previousConnectionState = ConnectionState;
-            ConnectionState = connectionMessageMessage.ConnectionState;
+            ConnectionState = connectionMessage.ConnectionState;
             RobotConnectionStateChanged?.Invoke(
                 this,
                 new RobotConnectionStateChangedEvent(SerialNumber, previousConnectionState, ConnectionState));
         }
     }
     
-    public void OnStateMessage(StateMessage stateMessageMessage)
+    public void OnStateMessage(StateMessage stateMessage)
     {
+        if (_receivedMessagesHeaders.TryUpdateStateHeaderId(stateMessage.HeaderId) is false)
+        {
+            _logger?.LogWarning(
+                "Received {message type} message with header id from the past. Received header id: {headerId} while current header id: {currentHeaderId}",
+                nameof(StateMessage),
+                stateMessage.HeaderId,
+                _receivedMessagesHeaders.ConnectionHeaderId!.Value);
+        }
+        
         if (_isObsevingVisualization is false)
         {
-            Pose = Pose.FromMessage(stateMessageMessage.AgvPositionMessage);
+            Pose = Pose.FromMessage(stateMessage.AgvPositionMessage);
         }
-
-        // TODO prepare deciding which order status - finish by adding cancelling
-        // cancelling - if cancellation is pending
-        // cancelled - if received for cancelling action that it is finished
-        // has reached last node -> Finished
-        // none of the above -> Pending
-        var lastNodeState = stateMessageMessage.NodeStates.Last();
-        var isFinished = lastNodeState.NodeId == stateMessageMessage.LastNodeId && lastNodeState.SequenceId == stateMessageMessage.LastNodeSequenceId;
-
+        
         OrderStatus orderStatus;
-        if (isFinished)
+        if (_orderCancellingChecker is not null)
         {
-            orderStatus = OrderStatus.Finished;
+            orderStatus = _orderCancellingChecker.HasOrderBeenCanceled(stateMessage) ?
+                OrderStatus.Canceled :
+                OrderStatus.Canceling;
         }
         else
         {
-            orderStatus = OrderStatus.Pending;
+            var lastNodeState = stateMessage.NodeStates.Last();
+            var isFinished = lastNodeState.NodeId == stateMessage.LastNodeId &&
+                             lastNodeState.SequenceId == stateMessage.LastNodeSequenceId;
+            orderStatus = isFinished ? OrderStatus.Finished : OrderStatus.Pending;
         }
-        OrderState = RobotOrderState.FromRobotStateMessage(stateMessageMessage, orderStatus);
+
+        
+        OrderState = RobotOrderState.FromRobotStateMessage(stateMessage, orderStatus);
         RobotOrderStateChanged?.Invoke(
             this,
             new RobotOrderStateChangedEvent(SerialNumber, OrderState));
-        State = RobotState.FromMessage(stateMessageMessage);
+        State = RobotState.FromMessage(stateMessage);
         RobotStateChanged?.Invoke(
             this,
             new RobotStateChangedEvent(SerialNumber, State));
     }
     
-    public void OnFactsheetMessage(FactsheetMessage factsheetMessageMessage)
+    public void OnFactsheetMessage(FactsheetMessage factsheetMessage)
     {
-        Factsheet = FactsheetInfo.FromMessage(factsheetMessageMessage);
+        if (_receivedMessagesHeaders.TryUpdateFactsheetHeaderId(factsheetMessage.HeaderId) is false)
+        {
+            _logger?.LogWarning(
+                "Received {message type} message with header id from the past. Received header id: {headerId} while current header id: {currentHeaderId}",
+                nameof(FactsheetMessage),
+                factsheetMessage.HeaderId,
+                _receivedMessagesHeaders.ConnectionHeaderId!.Value);
+        }
+        
+        Factsheet = FactsheetInfo.FromMessage(factsheetMessage);
+        FactsheetProtocolInfo = FactsheetProtocolInfo.FromMessage(factsheetMessage);
     }
     
-    public void OnVisualizationMessage(VisualizationMessage visualizationMessageMessage)
+    public void OnVisualizationMessage(VisualizationMessage visualizationMessage)
     {
         if (_isObsevingVisualization)
         {
-            UpdateRobotPosition(visualizationMessageMessage.AgvPositionMessage);
+            if (_receivedMessagesHeaders.TryUpdateVisualizationHeaderId(visualizationMessage.HeaderId) is false)
+            {
+                _logger?.LogWarning(
+                    "Received {message type} message with header id from the past. Received header id: {headerId} while current header id: {currentHeaderId}",
+                    nameof(VisualizationMessage),
+                    visualizationMessage.HeaderId,
+                    _receivedMessagesHeaders.ConnectionHeaderId!.Value);
+            }
+            UpdateRobotPosition(visualizationMessage.AgvPositionMessage);
         }
     }
 
-    public void InitOrderCancellation(OrderId orderId)
+    public void InitOrderCancellation(OrderId orderId, ActionId cancelActionId)
     {
-        
+        _orderCancellingChecker = new OrderCancellingChecker(cancelActionId, orderId);
     }
 
     private void UpdateRobotPosition(AgvPositionMessage positionMessage)

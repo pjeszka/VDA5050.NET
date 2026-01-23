@@ -1,4 +1,4 @@
-﻿namespace VDA5050.NET.Internal.MQTT;
+﻿namespace VDA5050.NET.Public.Models.MQTT;
 
 public sealed record MqttConnectionDetailsDto(
     bool IsConnected,

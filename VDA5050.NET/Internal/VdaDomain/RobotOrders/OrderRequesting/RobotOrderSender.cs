@@ -23,7 +23,7 @@ internal sealed class RobotOrderSender : IRobotOrderSender
         _systemClock = systemClock;
     }
 
-    public async Task<OrderId> SendOrder(OperationalRobot robot, RobotOrderRequest robotOrderRequest)
+    public Task SendOrder(OperationalRobot robot, RobotOrderRequest robotOrderRequest, OrderId orderId)
     {
         if (_mqttConnection.IsConnected is false)
         {
@@ -31,16 +31,16 @@ internal sealed class RobotOrderSender : IRobotOrderSender
         }
 
         var orderMessage = _messageBuilder.BuildOrderMessage(
+            orderId,
             robotOrderRequest,
             robot.TopicPrefix,
-            _systemClock.Now);
+            _systemClock.Now,
+            robot.FactsheetProtocolInfo);
 
-        await _mqttConnection.PublishAsync(robot.OrderTopic, orderMessage.ToJson());
-
-        return new OrderId(orderMessage.OrderId);
+        return _mqttConnection.PublishAsync(robot.OrderTopic, orderMessage.ToJson());
     }
 
-    public async Task<OrderUpdateId> SendOrderUpdate(OperationalRobot robot, RobotOrderUpdateRequest robotOrderUpdateRequest)
+    public Task SendOrderUpdate(OperationalRobot robot, RobotOrderUpdateRequest robotOrderUpdateRequest, OrderUpdateId orderUpdateId)
     {
         if (_mqttConnection.IsConnected is false)
         {
@@ -57,17 +57,14 @@ internal sealed class RobotOrderSender : IRobotOrderSender
             throw new InvalidOperationException(
                 $"Robot {robotOrderUpdateRequest.RobotSerialNumber} has active order with different id. Update for order with id: {robotOrderUpdateRequest.Request.OrderId!.Value} and pending action has id: {robot.OrderState.OrderId.Value}");
         }
-
-        var currentOrderUpdateId = robot.OrderState?.OrderUpdateId?.Value ?? 0;
         
         var orderMessage = _messageBuilder.BuildOrderUpdateMessage(
             robotOrderUpdateRequest,
             robot.TopicPrefix,
             _systemClock.Now,
-            currentOrderUpdateId);
+            orderUpdateId,
+            robot.FactsheetProtocolInfo);
 
-        await _mqttConnection.PublishAsync(robot.OrderTopic, orderMessage.ToJson());
-        
-        return new OrderUpdateId(orderMessage.OrderUpdateId);
+        return _mqttConnection.PublishAsync(robot.OrderTopic, orderMessage.ToJson());
     }
 }

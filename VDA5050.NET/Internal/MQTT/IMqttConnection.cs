@@ -1,8 +1,9 @@
 ﻿using MQTTnet.Protocol;
+using VDA5050.NET.Public.Models.MQTT;
 
 namespace VDA5050.NET.Internal.MQTT;
 
-public interface IMqttConnection
+internal interface IMqttConnection
 {
     bool IsConnected { get; }
     bool HasSubscriber(string topic);

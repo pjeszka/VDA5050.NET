@@ -1,5 +1,6 @@
 ﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.InstantAction;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Order;
+using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
@@ -8,48 +9,58 @@ namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
 
 internal sealed class MessageBuilder
 {
-    // TODO per robot keep track of header id on 
     private readonly Dictionary<RobotSerialNumber, SentMessageHeaders> _sentMessageHeaders = new ();
     public OrderMessage BuildOrderMessage(
+        OrderId orderId,
         RobotOrderRequest robotOrderRequest,
         string robotTopicPrefix,
-        DateTime timeStamp)
+        DateTime timeStamp,
+        FactsheetProtocolInfo? factsheetProtocolInfo = null)
     {
         var headerId = GetNextOrderHeaderId(robotOrderRequest.RobotSerialNumber);
-
-        var orderId = Guid.NewGuid().ToString();
-        return OrderMessage.CreateNewOrderMessage(
+        
+        var message = OrderMessage.CreateNewOrderMessage(
             headerId,
             robotTopicPrefix,
             timeStamp,
-            orderId,
+            orderId.Value,
             robotOrderRequest);
+        
+        RobotMessageValidator.ValidateOrderMessage(message, factsheetProtocolInfo);
+        return message;
     }
     
     public OrderMessage BuildOrderUpdateMessage(
         RobotOrderUpdateRequest robotOrderUpdateRequest,
         string robotTopicPrefix,
         DateTime timeStamp,
-        uint currentOrderUpdateId)
+        OrderUpdateId orderUpdateId,
+        FactsheetProtocolInfo? factsheetProtocolInfo = null)
     {
 
         var headerId = GetNextOrderHeaderId(robotOrderUpdateRequest.RobotSerialNumber);
         
-        return OrderMessage.CreateOrderUpdateMessage(
+        var message = OrderMessage.CreateOrderUpdateMessage(
             headerId,
             robotTopicPrefix,
             timeStamp,
-            ++currentOrderUpdateId,
+            orderUpdateId.Value,
             robotOrderUpdateRequest);
+        
+        RobotMessageValidator.ValidateOrderMessage(message, factsheetProtocolInfo);
+        return message;
     }
     
     public InstantActionMessage BuildInstantActionMessage(
         RobotInstantActionRequest robotInstantActionRequest,
         string robotTopicPrefix,
-        DateTime timeStamp)
+        DateTime timeStamp,
+        FactsheetProtocolInfo? factsheetProtocolInfo = null)
     {
         var headerId = GetNextInstantHeaderId(robotInstantActionRequest.RobotSerialNumber);
-        return InstantActionMessage.Create(headerId, robotTopicPrefix, timeStamp, robotInstantActionRequest);
+        var message = InstantActionMessage.Create(headerId, robotTopicPrefix, timeStamp, robotInstantActionRequest);
+        RobotMessageValidator.ValidateInstantActionMessage(message, factsheetProtocolInfo);
+        return message;
     }
 
     private uint GetNextOrderHeaderId(RobotSerialNumber robotSerialNumber)
@@ -81,6 +92,4 @@ internal sealed class MessageBuilder
         }
         return headerId;
     }
-
-
 }

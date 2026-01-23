@@ -3,7 +3,7 @@ using VDA5050.NET.Internal.MQTT.BackgroundServices;
 
 namespace VDA5050.NET.Internal.MQTT;
 
-public static class ServiceCollectionExtensions
+internal static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddMqtt(this IServiceCollection serviceCollection)
     {

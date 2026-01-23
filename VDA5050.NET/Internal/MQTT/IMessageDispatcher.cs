@@ -1,6 +1,6 @@
 ﻿namespace VDA5050.NET.Internal.MQTT;
 
-public interface IMessageDispatcher
+internal interface IMessageDispatcher
 {
     Task DispatchMessage(string topic, string message);
 }

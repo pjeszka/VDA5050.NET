@@ -1,5 +1,5 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.State.Enums;
+﻿using VDA5050.NET.Public.Enums.Vda5050.State;
 
 namespace VDA5050.NET.Public.Models.InstantActions;
 
-public sealed record Action(string Id, string ActionType, BlockingType BlockingType, List<Parameter> ActionParameters);
+public sealed record Action(ActionId Id, string ActionType, BlockingType BlockingType, List<Parameter> ActionParameters);

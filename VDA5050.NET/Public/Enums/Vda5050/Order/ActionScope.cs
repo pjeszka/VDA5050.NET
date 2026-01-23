@@ -1,13 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace VDA5050.NET.Internal.VdaDomain.Messages.MessageModels.MessageContracts.Factsheet.Enums;
+namespace VDA5050.NET.Public.Enums.Vda5050.Order;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ActionScope
 {
-    // If you need scope of an action (e.g. node / edge)
-    GLOBAL,
+    INSTANT,
     NODE,
     EDGE,
-    OTHER
 }
