@@ -1,4 +1,4 @@
-﻿namespace VDA5050.NET.Internal.VdaDomain.RobotOrders;
+﻿namespace VDA5050.NET.Public.Enums.Domain;
 
 public enum OrderRequestStatus
 {

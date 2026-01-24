@@ -11,6 +11,5 @@ public enum ActionStatus
     PAUSED,
     FINISHED,
     FAILED,
-    // possibly an UNKNOWN/OTHER fallback
     OTHER
 }

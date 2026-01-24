@@ -5,9 +5,11 @@ using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Factsheet;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Visualization;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+using VDA5050.NET.Public.Enums.Domain;
 using VDA5050.NET.Public.Enums.Vda5050.Connection;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Errors;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Orders.OrderState;
 using VDA5050.NET.Public.Models.Robots;
@@ -61,8 +63,9 @@ internal sealed class OperationalRobot
     public RobotState? State { get; private set; }
     public RobotOrderState? OrderState { get; private set; }
     public Pose? Pose { get; private set; }
-    
     public bool IsLocalized => Pose is not null;
+    
+    public ICollection<ErrorSpecifics>? Errors { get; private set; }
     
     public void AddPositionChangeHandler(
         EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
@@ -124,7 +127,13 @@ internal sealed class OperationalRobot
         {
             Pose = Pose.FromMessage(stateMessage.AgvPositionMessage);
         }
-        
+        else if (Pose is null)
+        {
+            _logger?.LogWarning(
+                "Observing visualization topic for robot {robotSerialNumber} but no data received about its pose",
+                SerialNumber);       
+        }
+
         OrderStatus orderStatus;
         if (_orderCancellingChecker is not null)
         {
@@ -145,6 +154,8 @@ internal sealed class OperationalRobot
         RobotOrderStateChanged?.Invoke(
             this,
             new RobotOrderStateChangedEvent(SerialNumber, OrderState));
+        
+        Errors = stateMessage.Errors?.Select(ErrorSpecifics.FromMessage).ToList();
         State = RobotState.FromMessage(stateMessage);
         RobotStateChanged?.Invoke(
             this,

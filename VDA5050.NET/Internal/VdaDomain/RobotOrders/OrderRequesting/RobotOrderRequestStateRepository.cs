@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using VDA5050.NET.Public.Enums.Domain;
 using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.Orders;
 

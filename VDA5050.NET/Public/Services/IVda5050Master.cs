@@ -1,5 +1,7 @@
-﻿using VDA5050.NET.Public.Events;
+﻿using VDA5050.NET.Public.Enums.Domain;
+using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Errors;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Robots;
@@ -27,11 +29,14 @@ public interface IVda5050Master
     Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest);
     Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest);
     Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
-    
     void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
     void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler);
     
     // instantActions
     Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request);
     void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler);
+    
+    // errors 
+    Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber);
+    Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId);
 }

@@ -2,13 +2,14 @@
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.InstantActions;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
-using VDA5050.NET.Internal.VdaDomain.RobotOrders;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
+using VDA5050.NET.Public.Enums.Domain;
 using VDA5050.NET.Public.Enums.Vda5050.State;
 using VDA5050.NET.Public.Events;
 using VDA5050.NET.Public.Exceptions;
 using VDA5050.NET.Public.Models;
+using VDA5050.NET.Public.Models.Errors;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Robots;
@@ -22,9 +23,13 @@ internal sealed class Vda5050Master : IVda5050Master
     private readonly IDiscoveredRobotRepository _discoveredRobotRepository;
     private readonly IOperationalRobotRepository _operationalRobotRepository;
     private readonly IMqttConnection _mqttConnection;
+    
     private readonly IRobotOrderSender _robotOrderSender;
-    private readonly IRobotInstantActionsSender _robotInstantActionsSender;
     private readonly IRobotOrderRequestStateRepository _robotOrderRequestStateRepository;
+    
+    private readonly IRobotInstantActionsSender _robotInstantActionsSender;
+    private readonly IInstantActionRequestRepository _instantActionRequestRepository;
+
     private readonly ILoggerFactory _loggerFactory;
     private readonly ISystemClock _systemClock;
     private readonly ILogger<Vda5050Master> _logger;
@@ -34,10 +39,11 @@ internal sealed class Vda5050Master : IVda5050Master
         IOperationalRobotRepository operationalRobotRepository,
         IMqttConnection mqttConnection,
         IRobotOrderSender robotOrderSender,
+        IRobotOrderRequestStateRepository robotOrderRequestStateRepository,
         IRobotInstantActionsSender robotInstantActionsSender,
+        IInstantActionRequestRepository instantActionRequestRepository,
         ILogger<Vda5050Master> logger,
         ILoggerFactory loggerFactory,
-        IRobotOrderRequestStateRepository robotOrderRequestStateRepository,
         ISystemClock systemClock)
     {
         _discoveredRobotRepository = discoveredRobotRepository;
@@ -49,6 +55,7 @@ internal sealed class Vda5050Master : IVda5050Master
         _loggerFactory = loggerFactory;
         _robotOrderRequestStateRepository = robotOrderRequestStateRepository;
         _systemClock = systemClock;
+        _instantActionRequestRepository = instantActionRequestRepository;
     }
 
     public Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
@@ -176,7 +183,7 @@ internal sealed class Vda5050Master : IVda5050Master
             var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
             var orderUpdateId = new OrderUpdateId(0);
             _robotOrderRequestStateRepository.UpdateOrderRequestStatus(orderId, orderUpdateId, status, message, sentTimeStamp);
-            RobotOrderRequestStateChanged.Invoke(this, new RobotOrderRequestStateChanged(
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
                 robotOrderRequest.RobotSerialNumber,
                 orderId,
                 orderUpdateId,
@@ -241,7 +248,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 status,
                 message,
                 sentTimeStamp);
-            RobotOrderRequestStateChanged.Invoke(this, new RobotOrderRequestStateChanged(
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
                 robotOrderUpdateRequest.RobotSerialNumber,
                 robotOrderUpdateRequest.Request.OrderId!,
                 orderUpdateId,
@@ -259,7 +266,7 @@ internal sealed class Vda5050Master : IVda5050Master
         }
 
         var cancelActionId = ActionId.New();
-        var actionList = new List<Action>()
+        var actionList = new List<Action>
         {
             new(ActionId.New(), SpecificInstantActionTypes.CancelOrder, BlockingType.NONE, new List<Parameter>())
         };
@@ -290,7 +297,13 @@ internal sealed class Vda5050Master : IVda5050Master
         }
         
         var actionIds = await _robotInstantActionsSender.SendInstantAction(robot, request);
-        
+
+        foreach (var actionId in actionIds)
+        {
+            var actionState = new InstantActionRequestState(request.RobotSerialNumber, actionId, ActionStatus.WAITING);
+            _instantActionRequestRepository.AddInstantActionRequest(actionState);
+        }
+
         return actionIds;
     }
 
@@ -299,10 +312,39 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotInstantActionStateChanged += robotOrderStateChangedHandler;
     }
 
+    public Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber)
+    {
+        var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(robotSerialNumber);
+        }
+        
+        return Task.FromResult(robot.Errors);
+    }
+
+    public Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId)
+    {
+        var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
+        if (robot is null)
+        {
+            throw new RobotNotOperationalException(robotSerialNumber);
+        }
+        
+        var errors = robot.Errors?
+            .Where(x => 
+                x.ErrorReferences != null &&
+                x.ErrorReferences
+                    .Any(e => e.Type == errorReferenceType && e.Id == referenceId))
+            .ToList();
+
+        return Task.FromResult<ICollection<ErrorSpecifics>?>(errors);
+    }
+
     private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
-    private event EventHandler<RobotOrderRequestStateChanged> RobotOrderRequestStateChanged;
-    private event EventHandler<RobotInstantActionStateChanged> RobotInstantActionStateChanged;
+    private event EventHandler<RobotOrderRequestStateChanged>? RobotOrderRequestStateChanged;
+    private event EventHandler<RobotInstantActionStateChanged>? RobotInstantActionStateChanged;
     
     private void OnRobotOrderStateChanged(object? sender, RobotOrderStateChangedEvent e)
     {
@@ -320,7 +362,7 @@ internal sealed class Vda5050Master : IVda5050Master
             if (waitingOrderRequestState.Id.OrderId == e.OrderState.OrderId &&
                 waitingOrderRequestState.Id.OrderUpdateId == e.OrderState.OrderUpdateId)
             {
-                RobotOrderRequestStateChanged.Invoke(
+                RobotOrderRequestStateChanged?.Invoke(
                     this,
                     new RobotOrderRequestStateChanged(
                         e.SerialNumber,
@@ -335,7 +377,7 @@ internal sealed class Vda5050Master : IVda5050Master
             else if(_systemClock.Now - waitingOrderRequestState.SentAt > TimeSpan.FromSeconds(10))
             {
                 const string message = "Timeout while waiting for order confirmation";
-                RobotOrderRequestStateChanged.Invoke(
+                RobotOrderRequestStateChanged?.Invoke(
                     this,
                     new RobotOrderRequestStateChanged(
                         e.SerialNumber,
@@ -351,9 +393,34 @@ internal sealed class Vda5050Master : IVda5050Master
             }
         }
         
-        // TODO checking instantAction requests
-        // 1. keep track of instantAction requests
-        // 2. check if instantAction status has changed
+        // checking instant actions
+        _instantActionRequestRepository.Clear();
+        var instantActionRequestStates = _instantActionRequestRepository.GetAllForRobot(e.SerialNumber);
+        foreach(var instantActionRequestState in instantActionRequestStates)
+        {
+            var actionState = e.OrderState.ActionStates
+                    .FirstOrDefault(x => x.Id == instantActionRequestState.ActionId.Value);
+            if (actionState is null)
+            {
+                _logger.LogWarning(
+                    "Instant action {actionId} not found in order state for robot {serialNumber}",
+                    instantActionRequestState.ActionId,
+                    e.SerialNumber);    
+            }
+            else
+            {
+                if (_instantActionRequestRepository.TryUpdateInstantActionRequestStatus(
+                        instantActionRequestState.ActionId, actionState.Status))
+                {
+                    RobotInstantActionStateChanged?.Invoke(
+                        this,
+                        new RobotInstantActionStateChanged(
+                            e.SerialNumber,
+                            instantActionRequestState.ActionId,
+                            actionState.Status));
+                }
+            }
+        }
         
     }
 

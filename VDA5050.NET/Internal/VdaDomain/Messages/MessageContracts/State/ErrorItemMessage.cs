@@ -10,6 +10,22 @@ internal class ErrorItemMessage
 
     [JsonPropertyName("errorLevel")]
     public ErrorLevel ErrorLevel { get; set; }
+    
+    [JsonPropertyName("errorReferences")]
+    public ErrorReferenceMessage[]? ErrorReferences { get; set; }
 
-    // maybe description or hint fields
+    [JsonPropertyName("errorDescription")]
+    public string? ErrorDescription { get; set; } = null;
+    
+    [JsonPropertyName("errorHint")]
+    public string? ErrorHint { get; set; } = null;
+}
+
+internal class ErrorReferenceMessage
+{
+    [JsonPropertyName("referenceKey")]
+    public string ReferenceKey { get; set; } = string.Empty;
+    
+    [JsonPropertyName("referenceValue")]
+    public string ReferenceValue { get; set; } = string.Empty;
 }

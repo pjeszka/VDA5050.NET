@@ -1,5 +1,6 @@
 ﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.State;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
+using VDA5050.NET.Public.Enums.Domain;
 
 namespace VDA5050.NET.Public.Models.Orders.OrderState;
 

@@ -37,7 +37,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Public\Enums\Domain\" />
       <Folder Include="Public\Models\Orders\OrderRequesting\" />
     </ItemGroup>
 

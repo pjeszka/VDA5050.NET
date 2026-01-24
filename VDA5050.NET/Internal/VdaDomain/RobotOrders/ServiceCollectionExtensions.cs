@@ -13,7 +13,8 @@ internal static class ServiceCollectionExtensions
             .AddSingleton<MessageBuilder>()
             .AddSingleton<IRobotOrderRequestStateRepository, RobotOrderRequestStateRepository>()
             .AddSingleton<IRobotOrderSender, RobotOrderSender>()
-            .AddSingleton<IRobotInstantActionsSender, RobotInstantActionsSender>();
+            .AddSingleton<IRobotInstantActionsSender, RobotInstantActionsSender>()
+            .AddSingleton<IInstantActionRequestRepository, InstantActionRequestRepository>();
         return serviceCollection;
     }
 }
