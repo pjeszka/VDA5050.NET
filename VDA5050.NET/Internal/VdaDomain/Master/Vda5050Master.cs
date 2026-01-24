@@ -59,18 +59,18 @@ internal sealed class Vda5050Master : IVda5050Master
         _instantActionRequestRepository = instantActionRequestRepository;
     }
 
-    public Task<ICollection<OperationalRobotDetails>> GetOperationalRobots()
+    public Task<ICollection<OperationalRobotDetails>> GetOperationalRobots(CancellationToken cancellationToken)
     {
         return Task.FromResult<ICollection<OperationalRobotDetails>>(
             _operationalRobotRepository.GetRobots().Select(OperationalRobotDetails.FromEntity).ToList());
     }
 
-    public Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber)
+    public Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken)
     {
         return Task.FromResult(DiscoveredRobotDetails.Create(_discoveredRobotRepository.GetRobot(robotSerialNumber)));
     }
 
-    public Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots()
+    public Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots(CancellationToken cancellationToken)
     {
         var robots = _discoveredRobotRepository
             .GetDiscoveredRobots()
@@ -79,7 +79,7 @@ internal sealed class Vda5050Master : IVda5050Master
         return Task.FromResult<ICollection<DiscoveredRobotDetails>>(robots);
     }
 
-    public async Task StartRobotOperation(RobotSettings robotSettings)
+    public async Task StartRobotOperation(RobotSettings robotSettings, CancellationToken cancellationToken)
     {
         if (_operationalRobotRepository.IsRobotOperational(robotSettings.RobotSerialNumber))
         {
@@ -104,7 +104,7 @@ internal sealed class Vda5050Master : IVda5050Master
         
     }
 
-    public async Task StopRobotOperation(RobotSerialNumber robotSerialNumber)
+    public async Task StopRobotOperation(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
 
@@ -138,7 +138,7 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotPositionChanged += robotPositionChangedHandler;
     }
 
-    public async Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest)
+    public async Task<OrderId> RequestRobotOrder(RobotOrderRequest robotOrderRequest, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotOrderRequest.RobotSerialNumber);
         if (robot is null)
@@ -164,32 +164,7 @@ internal sealed class Vda5050Master : IVda5050Master
         return orderId;
     }
 
-    private void SetOrderRequestStatus(
-        OrderId orderId,
-        RobotOrderRequest robotOrderRequest,
-        OrderRequestStatus status,
-        string? message = null)
-    {
-        if (status == OrderRequestStatus.Requested)
-        {
-            var orderRequestState = new OrderRequestState(orderId, robotOrderRequest);
-            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
-        }
-        else
-        {
-            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
-            var orderUpdateId = new OrderUpdateId(0);
-            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(orderId, orderUpdateId, status, message, sentTimeStamp);
-            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
-                robotOrderRequest.RobotSerialNumber,
-                orderId,
-                orderUpdateId,
-                status,
-                message));
-        }
-    }
-
-    public async Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest)
+    public async Task<OrderUpdateId> RequestRobotOrderUpdate(RobotOrderUpdateRequest robotOrderUpdateRequest, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotOrderUpdateRequest.RobotSerialNumber);
         if (robot is null)
@@ -224,37 +199,8 @@ internal sealed class Vda5050Master : IVda5050Master
         SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Sent);
         return newOrderUpdateId;
     }
-    
-    private void SetOrderUpdateRequestStatus(
-        OrderUpdateId orderUpdateId,
-        RobotOrderUpdateRequest robotOrderUpdateRequest,
-        OrderRequestStatus status,
-        string? message = null)
-    {
-        if (status == OrderRequestStatus.Requested)
-        {
-            var orderRequestState = new OrderRequestState(orderUpdateId, robotOrderUpdateRequest);
-            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
-        }
-        else
-        {
-            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
-            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
-                robotOrderUpdateRequest.Request.OrderId!,
-                orderUpdateId,
-                status,
-                message,
-                sentTimeStamp);
-            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
-                robotOrderUpdateRequest.RobotSerialNumber,
-                robotOrderUpdateRequest.Request.OrderId!,
-                orderUpdateId,
-                status,
-                message));
-        }
-    }
 
-    public async Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId)
+    public async Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
         if (robot is null)
@@ -285,7 +231,7 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotOrderRequestStateChanged += robotOrderRequestStateChangedHandler;
     }
     
-    public async Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request)
+    public async Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(request.RobotSerialNumber);
         if (robot is null)
@@ -309,7 +255,7 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotInstantActionStateChanged += robotOrderStateChangedHandler;
     }
 
-    public Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber)
+    public Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
         if (robot is null)
@@ -320,7 +266,7 @@ internal sealed class Vda5050Master : IVda5050Master
         return Task.FromResult(robot.Errors);
     }
 
-    public Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId)
+    public Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId, CancellationToken cancellationToken)
     {
         var robot = _operationalRobotRepository.GetRobot(robotSerialNumber);
         if (robot is null)
@@ -478,5 +424,59 @@ internal sealed class Vda5050Master : IVda5050Master
             e.PreviousConnectionState,
             e.NewConnectionState);
         RobotConnectionStateChanged?.Invoke(sender, e);
+    }
+    
+    private void SetOrderRequestStatus(
+        OrderId orderId,
+        RobotOrderRequest robotOrderRequest,
+        OrderRequestStatus status,
+        string? message = null)
+    {
+        if (status == OrderRequestStatus.Requested)
+        {
+            var orderRequestState = new OrderRequestState(orderId, robotOrderRequest);
+            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
+        }
+        else
+        {
+            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
+            var orderUpdateId = new OrderUpdateId(0);
+            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(orderId, orderUpdateId, status, message, sentTimeStamp);
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
+                robotOrderRequest.RobotSerialNumber,
+                orderId,
+                orderUpdateId,
+                status,
+                message));
+        }
+    }
+    
+    private void SetOrderUpdateRequestStatus(
+        OrderUpdateId orderUpdateId,
+        RobotOrderUpdateRequest robotOrderUpdateRequest,
+        OrderRequestStatus status,
+        string? message = null)
+    {
+        if (status == OrderRequestStatus.Requested)
+        {
+            var orderRequestState = new OrderRequestState(orderUpdateId, robotOrderUpdateRequest);
+            _robotOrderRequestStateRepository.AddOrderRequest(orderRequestState);
+        }
+        else
+        {
+            var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
+            _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
+                robotOrderUpdateRequest.Request.OrderId!,
+                orderUpdateId,
+                status,
+                message,
+                sentTimeStamp);
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
+                robotOrderUpdateRequest.RobotSerialNumber,
+                robotOrderUpdateRequest.Request.OrderId!,
+                orderUpdateId,
+                status,
+                message));
+        }
     }
 }

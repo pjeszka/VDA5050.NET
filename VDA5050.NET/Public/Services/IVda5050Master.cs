@@ -12,14 +12,14 @@ namespace VDA5050.NET.Public.Services;
 public interface IVda5050Master
 {
     // robot discovery
-    Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber);
-    Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots();
+    Task<DiscoveredRobotDetails?> GetAccessibleRobot(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken);
+    Task<ICollection<DiscoveredRobotDetails>> GetAccessibleRobots(CancellationToken cancellationToken);
     // TODO event about discovering robot
     
     // robot management
-    Task<ICollection<OperationalRobotDetails>> GetOperationalRobots();
-    Task StartRobotOperation(RobotSettings robotSettings);
-    Task StopRobotOperation(RobotSerialNumber robotSerialNumber);
+    Task<ICollection<OperationalRobotDetails>> GetOperationalRobots(CancellationToken cancellationToken);
+    Task StartRobotOperation(RobotSettings robotSettings, CancellationToken cancellationToken);
+    Task StopRobotOperation(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken);
     
     // robot state observing
     void AddRobotConnectionStateChangeHandler(EventHandler<RobotConnectionStateChangedEvent> robotConnectionStateChangedHandler);
@@ -27,19 +27,23 @@ public interface IVda5050Master
     void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler);
     
     // ordering
-    Task<OrderId> SendRobotOrder(RobotOrderRequest robotOrderRequest);
-    Task<OrderUpdateId> UpdateRobotOrder(RobotOrderUpdateRequest robotOrderUpdateRequest);
-    Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId);
+    Task<OrderId> RequestRobotOrder(RobotOrderRequest robotOrderRequest, CancellationToken cancellationToken);
+    Task<OrderUpdateId> RequestRobotOrderUpdate(RobotOrderUpdateRequest robotOrderUpdateRequest, CancellationToken cancellationToken);
+    Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId, CancellationToken cancellationToken);
     void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
     void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler);
     
     // instantActions
-    Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request);
+    Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request, CancellationToken cancellationToken);
     void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler);
     
     // errors 
-    Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber);
-    Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId);
+    Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken);
+    Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(
+        RobotSerialNumber robotSerialNumber,
+        ErrorReferenceType errorReferenceType,
+        string referenceId,
+        CancellationToken cancellationToken);
     
     // generics
     void AddRobotEventHandler<T>(EventHandler<T> robotEventChangeHandler) where T : IRobotEvent;
