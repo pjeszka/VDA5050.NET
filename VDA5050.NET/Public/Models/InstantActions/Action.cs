@@ -2,4 +2,8 @@
 
 namespace VDA5050.NET.Public.Models.InstantActions;
 
-public sealed record Action(ActionId Id, string ActionType, BlockingType BlockingType, List<Parameter> ActionParameters);
+public sealed record Action(
+    ActionId Id,
+    string ActionType,
+    BlockingType BlockingType,
+    List<Parameter> ActionParameters);
