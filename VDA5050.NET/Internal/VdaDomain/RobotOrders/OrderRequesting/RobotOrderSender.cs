@@ -47,17 +47,6 @@ internal sealed class RobotOrderSender : IRobotOrderSender
         {
             throw new InvalidOperationException("MQTT connection is not connected");
         }
-
-        if (robot.OrderState?.OrderId is null)
-        {
-            throw new InvalidOperationException($"Robot {robotOrderUpdateRequest.RobotSerialNumber} has no active order");
-        }
-
-        if (robot.OrderState.OrderId != robotOrderUpdateRequest.Request.OrderId)
-        {
-            throw new InvalidOperationException(
-                $"Robot {robotOrderUpdateRequest.RobotSerialNumber} has active order with different id. Update for order with id: {robotOrderUpdateRequest.Request.OrderId!.Value} and pending action has id: {robot.OrderState.OrderId.Value}");
-        }
         
         var orderMessage = _messageBuilder.BuildOrderUpdateMessage(
             robotOrderUpdateRequest,

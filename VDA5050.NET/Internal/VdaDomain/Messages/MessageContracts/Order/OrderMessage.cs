@@ -32,11 +32,11 @@ internal class OrderMessage : Header
         order.FillHeader(headerId, robotTopicPrefix, timeStamp);
         order.OrderId = orderId;
         order.OrderUpdateId = 0;
-        order.ZoneSetId = robotOrderRequest.Request.ZoneSetId;
-        order.Nodes = robotOrderRequest.Request.Nodes
+        order.ZoneSetId = robotOrderRequest.ZoneSetId;
+        order.Nodes = robotOrderRequest.Nodes
             .Select((x, index) => NodeMessage.CreateNodeMessage(x, (uint)index))
             .ToList();
-        order.Edges = robotOrderRequest.Request.Edges
+        order.Edges = robotOrderRequest.Edges
             .Select((x, index) => EdgeMessage.CreateEdgeMessage(x, (uint)index))
             .ToList();
         
@@ -53,13 +53,13 @@ internal class OrderMessage : Header
     {
         var order = new OrderMessage();
         order.FillHeader(headerId, robotTopicPrefix, timeStamp);
-        order.OrderId = robotOrderUpdateRequest.Request.OrderId!.Value;
+        order.OrderId = robotOrderUpdateRequest.OrderId!.Value;
         order.OrderUpdateId = orderUpdateId;
-        order.ZoneSetId = robotOrderUpdateRequest.Request.ZoneSetId;
-        order.Nodes = robotOrderUpdateRequest.Request.Nodes
+        order.ZoneSetId = robotOrderUpdateRequest.ZoneSetId;
+        order.Nodes = robotOrderUpdateRequest.Nodes
             .Select((x, index) => NodeMessage.CreateNodeMessage(x, (uint)index))
             .ToList();
-        order.Edges = robotOrderUpdateRequest.Request.Edges
+        order.Edges = robotOrderUpdateRequest.Edges
             .Select((x, index) => EdgeMessage.CreateEdgeMessage(x, (uint)index))
             .ToList();
         

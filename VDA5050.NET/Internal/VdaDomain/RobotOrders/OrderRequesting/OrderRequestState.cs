@@ -13,7 +13,9 @@ public sealed record OrderRequestState
     {
         RobotSerialNumber = orderRequest.RobotSerialNumber;
         Id = new OrderRequestId(orderId, new OrderUpdateId(0));
-        OrderRequest = orderRequest.Request;
+        Nodes = orderRequest.Nodes;
+        Edges = orderRequest.Edges;
+        ZoneSetId = orderRequest.ZoneSetId;
         Status = OrderRequestStatus.Requested;
         Message = null;       
     }
@@ -23,8 +25,10 @@ public sealed record OrderRequestState
         RobotOrderUpdateRequest orderRequest)
     {
         RobotSerialNumber = orderRequest.RobotSerialNumber;
-        Id = new OrderRequestId(orderRequest.Request.OrderId!, orderUpdateId);
-        OrderRequest = orderRequest.Request;
+        Id = new OrderRequestId(orderRequest.OrderId, orderUpdateId);
+        Nodes = orderRequest.Nodes;
+        Edges = orderRequest.Edges;
+        ZoneSetId = orderRequest.ZoneSetId;
         Status = OrderRequestStatus.Requested;
         Message = null;       
     }
@@ -45,7 +49,9 @@ public sealed record OrderRequestState
 
     public RobotSerialNumber RobotSerialNumber { get; private set; }
     public OrderRequestId Id { get; private set; }
-    public OrderRequest OrderRequest { get; private set; }
+    public List<Node> Nodes { get; set; }
+    public List<Edge> Edges { get; set; }
+    public string? ZoneSetId { get; set; }
     public OrderRequestStatus Status { get; private set; }
     public DateTime? SentAt { get; private set; }
     public string? Message { get;  private set; } = null;

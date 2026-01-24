@@ -134,26 +134,29 @@ internal sealed class OperationalRobot
                 SerialNumber);       
         }
 
-        OrderStatus orderStatus;
-        if (_orderCancellingChecker is not null)
+        if (string.IsNullOrWhiteSpace(stateMessage.OrderId) is false)
         {
-            orderStatus = _orderCancellingChecker.HasOrderBeenCanceled(stateMessage) ?
-                OrderStatus.Canceled :
-                OrderStatus.Canceling;
-        }
-        else
-        {
-            var lastNodeState = stateMessage.NodeStates.Last();
-            var isFinished = lastNodeState.NodeId == stateMessage.LastNodeId &&
-                             lastNodeState.SequenceId == stateMessage.LastNodeSequenceId;
-            orderStatus = isFinished ? OrderStatus.Finished : OrderStatus.Pending;
-        }
+            OrderStatus orderStatus;
+            if (_orderCancellingChecker is not null)    
+            {
+                orderStatus = _orderCancellingChecker.HasOrderBeenCanceled(stateMessage) ?
+                    OrderStatus.Canceled :
+                    OrderStatus.Canceling;
+            }
+            else
+            {
+                var lastNodeState = stateMessage.NodeStates.Last();
+                var isFinished = lastNodeState.NodeId == stateMessage.LastNodeId &&
+                                 lastNodeState.SequenceId == stateMessage.LastNodeSequenceId;
+                orderStatus = isFinished ? OrderStatus.Finished : OrderStatus.Pending;
+            }
 
         
-        OrderState = RobotOrderState.FromRobotStateMessage(stateMessage, orderStatus);
-        RobotOrderStateChanged?.Invoke(
-            this,
-            new RobotOrderStateChangedEvent(SerialNumber, OrderState));
+            OrderState = RobotOrderState.FromRobotStateMessage(stateMessage, orderStatus);
+            RobotOrderStateChanged?.Invoke(
+                this,
+                new RobotOrderStateChangedEvent(SerialNumber, OrderState));
+        }
         
         Errors = stateMessage.Errors?.Select(ErrorSpecifics.FromMessage).ToList();
         State = RobotState.FromMessage(stateMessage);

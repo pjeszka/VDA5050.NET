@@ -9,11 +9,15 @@ public sealed record RobotOrderRequest
         string? zoneSetId = null)
     {
         RobotSerialNumber = robotSerialNumber;
-        Request = new OrderRequest(null, nodes, edges, zoneSetId);
+        Nodes = nodes;
+        Edges = edges;
+        ZoneSetId = zoneSetId;
     }
 
     public RobotSerialNumber RobotSerialNumber { get; }
-    public OrderRequest Request { get; }
+    public List<Node> Nodes { get; set; }
+    public List<Edge> Edges { get; set; }
+    public string? ZoneSetId { get; set; }
 }
 
 public sealed record RobotOrderUpdateRequest
@@ -25,10 +29,18 @@ public sealed record RobotOrderUpdateRequest
         string? zoneSetId = null)
     {
         RobotSerialNumber = robotSerialNumber;
-        Request = new OrderRequest(orderId, nodes, edges, zoneSetId);
+        OrderId = orderId;
+        Nodes = nodes;
+        Edges = edges;
+        ZoneSetId = zoneSetId;
     }
-    public RobotSerialNumber RobotSerialNumber { get; }
-    public OrderRequest Request { get; }
+    public RobotSerialNumber RobotSerialNumber { get; set; }
+    public OrderId OrderId { get; set; }
+    public List<Node> Nodes { get; set; }
+    public List<Edge> Edges { get; set; }
+    public string? ZoneSetId { get; set; }
+    
+    
 }
 
 public record OrderRequest(OrderId? OrderId, List<Node> Nodes, List<Edge> Edges, string? ZoneSetId = null);

@@ -177,10 +177,18 @@ internal sealed class Vda5050Master : IVda5050Master
         var newOrderUpdateId = new OrderUpdateId(currentOrderUpdateId.Value + 1);
         SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Requested);
 
-        if (robot.OrderState?.OrderId != robotOrderUpdateRequest.Request.OrderId)
+        if (robot.OrderState?.OrderId != robotOrderUpdateRequest.OrderId)
         {
             const string messageFormat = "Cannot update order. Robot {0} is not assigned to order {1}. Its current order id is {2}.";
-            var message = string.Format(messageFormat, robot.SerialNumber.Value, robotOrderUpdateRequest.Request.OrderId, robot.OrderState?.OrderId);
+            var message = string.Format(messageFormat, robot.SerialNumber.Value, robotOrderUpdateRequest.OrderId, robot.OrderState?.OrderId);
+            SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Invalid, message);
+            throw new InvalidOperationException(message);
+        }
+        
+        if (robot.OrderState?.OrderId is null)
+        {
+            const string messageFormat = "Cannot update order. Robot {0} has no active order.";
+            var message = string.Format(messageFormat, robot.SerialNumber.Value);
             SetOrderUpdateRequestStatus(newOrderUpdateId, robotOrderUpdateRequest, OrderRequestStatus.Invalid, message);
             throw new InvalidOperationException(message);
         }
@@ -466,14 +474,14 @@ internal sealed class Vda5050Master : IVda5050Master
         {
             var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
             _robotOrderRequestStateRepository.UpdateOrderRequestStatus(
-                robotOrderUpdateRequest.Request.OrderId!,
+                robotOrderUpdateRequest.OrderId!,
                 orderUpdateId,
                 status,
                 message,
                 sentTimeStamp);
             RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChangedEvent(
                 robotOrderUpdateRequest.RobotSerialNumber,
-                robotOrderUpdateRequest.Request.OrderId!,
+                robotOrderUpdateRequest.OrderId!,
                 orderUpdateId,
                 status,
                 message));
