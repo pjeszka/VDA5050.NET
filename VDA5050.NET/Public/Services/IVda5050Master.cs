@@ -31,11 +31,11 @@ public interface IVda5050Master
     Task<OrderUpdateId> RequestRobotOrderUpdate(RobotOrderUpdateRequest robotOrderUpdateRequest, CancellationToken cancellationToken);
     Task<ActionId> CancelRobotOrder(RobotSerialNumber robotSerialNumber, OrderId orderId, CancellationToken cancellationToken);
     void AddRobotOrderStateChangeHandler(EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedHandler);
-    void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler);
+    void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChangedEvent> robotOrderRequestStateChangedHandler);
     
     // instantActions
     Task<ICollection<ActionId>> RequestInstantAction(RobotInstantActionRequest request, CancellationToken cancellationToken);
-    void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler);
+    void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChangedEvent> robotOrderStateChangedHandler);
     
     // errors 
     Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber, CancellationToken cancellationToken);

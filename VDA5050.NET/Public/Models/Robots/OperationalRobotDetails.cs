@@ -5,6 +5,7 @@ namespace VDA5050.NET.Public.Models.Robots;
 
 public record OperationalRobotDetails(
     RobotSerialNumber SerialNumber,
+    Pose? Pose,
     ConnectionState ConnectionState,
     RobotState? State,
     FactsheetInfo? Factsheet)
@@ -13,6 +14,7 @@ public record OperationalRobotDetails(
     {
         return new OperationalRobotDetails(
             entity.SerialNumber,
+            entity.Pose,
             entity.ConnectionState,
             entity.State,
             entity.Factsheet);

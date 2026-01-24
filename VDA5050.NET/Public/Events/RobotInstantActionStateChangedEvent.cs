@@ -3,7 +3,7 @@ using VDA5050.NET.Public.Models;
 
 namespace VDA5050.NET.Public.Events;
 
-public record RobotInstantActionStateChanged(
+public record RobotInstantActionStateChangedEvent(
     RobotSerialNumber RobotSerialNumber,
     ActionId ActionId,
     ActionStatus Status) : IRobotEvent;

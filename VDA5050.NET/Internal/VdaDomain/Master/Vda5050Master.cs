@@ -226,7 +226,7 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotOrderStateChanged += robotOrderStateChangedHandler;
     }
 
-    public void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedHandler)
+    public void AddRobotOrderRequestStateChangeHandler(EventHandler<RobotOrderRequestStateChangedEvent> robotOrderRequestStateChangedHandler)
     {
         RobotOrderRequestStateChanged += robotOrderRequestStateChangedHandler;
     }
@@ -250,7 +250,7 @@ internal sealed class Vda5050Master : IVda5050Master
         return actionIds;
     }
 
-    public void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChanged> robotOrderStateChangedHandler)
+    public void AddInstantActionStateChangedHandler(EventHandler<RobotInstantActionStateChangedEvent> robotOrderStateChangedHandler)
     {
         RobotInstantActionStateChanged += robotOrderStateChangedHandler;
     }
@@ -306,12 +306,12 @@ internal sealed class Vda5050Master : IVda5050Master
             RobotOrderStateChanged += robotOrderStateChangedEventHandler;
         }
         
-        if (robotEventChangeHandler is EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedEventHandler)
+        if (robotEventChangeHandler is EventHandler<RobotOrderRequestStateChangedEvent> robotOrderRequestStateChangedEventHandler)
         {
             RobotOrderRequestStateChanged += robotOrderRequestStateChangedEventHandler;
         }
         
-        if (robotEventChangeHandler is EventHandler<RobotInstantActionStateChanged> robotInstantActionStateChangedEventHandler)
+        if (robotEventChangeHandler is EventHandler<RobotInstantActionStateChangedEvent> robotInstantActionStateChangedEventHandler)
         {
             RobotInstantActionStateChanged += robotInstantActionStateChangedEventHandler;
         }
@@ -321,8 +321,8 @@ internal sealed class Vda5050Master : IVda5050Master
     private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
     private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
-    private event EventHandler<RobotOrderRequestStateChanged>? RobotOrderRequestStateChanged;
-    private event EventHandler<RobotInstantActionStateChanged>? RobotInstantActionStateChanged;
+    private event EventHandler<RobotOrderRequestStateChangedEvent>? RobotOrderRequestStateChanged;
+    private event EventHandler<RobotInstantActionStateChangedEvent>? RobotInstantActionStateChanged;
     
     private void OnRobotOrderStateChanged(object? sender, RobotOrderStateChangedEvent e)
     {
@@ -342,7 +342,7 @@ internal sealed class Vda5050Master : IVda5050Master
             {
                 RobotOrderRequestStateChanged?.Invoke(
                     this,
-                    new RobotOrderRequestStateChanged(
+                    new RobotOrderRequestStateChangedEvent(
                         e.RobotSerialNumber,
                         waitingOrderRequestState.Id.OrderId,
                         waitingOrderRequestState.Id.OrderUpdateId,
@@ -357,7 +357,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 const string message = "Timeout while waiting for order confirmation";
                 RobotOrderRequestStateChanged?.Invoke(
                     this,
-                    new RobotOrderRequestStateChanged(
+                    new RobotOrderRequestStateChangedEvent(
                         e.RobotSerialNumber,
                         waitingOrderRequestState.Id.OrderId,
                         waitingOrderRequestState.Id.OrderUpdateId,
@@ -392,7 +392,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 {
                     RobotInstantActionStateChanged?.Invoke(
                         this,
-                        new RobotInstantActionStateChanged(
+                        new RobotInstantActionStateChangedEvent(
                             e.RobotSerialNumber,
                             instantActionRequestState.ActionId,
                             actionState.Status));
@@ -442,7 +442,7 @@ internal sealed class Vda5050Master : IVda5050Master
             var sentTimeStamp = status == OrderRequestStatus.Sent ? _systemClock.Now : (DateTime?)null;
             var orderUpdateId = new OrderUpdateId(0);
             _robotOrderRequestStateRepository.UpdateOrderRequestStatus(orderId, orderUpdateId, status, message, sentTimeStamp);
-            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChangedEvent(
                 robotOrderRequest.RobotSerialNumber,
                 orderId,
                 orderUpdateId,
@@ -471,7 +471,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 status,
                 message,
                 sentTimeStamp);
-            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChanged(
+            RobotOrderRequestStateChanged?.Invoke(this, new RobotOrderRequestStateChangedEvent(
                 robotOrderUpdateRequest.RobotSerialNumber,
                 robotOrderUpdateRequest.Request.OrderId!,
                 orderUpdateId,
