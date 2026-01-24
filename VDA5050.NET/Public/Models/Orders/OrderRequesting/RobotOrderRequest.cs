@@ -14,7 +14,7 @@ public sealed record RobotOrderRequest
         ZoneSetId = zoneSetId;
     }
 
-    public RobotSerialNumber RobotSerialNumber { get; }
+    public RobotSerialNumber RobotSerialNumber { get; set; }
     public List<Node> Nodes { get; set; }
     public List<Edge> Edges { get; set; }
     public string? ZoneSetId { get; set; }
@@ -42,7 +42,3 @@ public sealed record RobotOrderUpdateRequest
     
     
 }
-
-public record OrderRequest(OrderId? OrderId, List<Node> Nodes, List<Edge> Edges, string? ZoneSetId = null);
-
-
