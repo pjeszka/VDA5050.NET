@@ -10,4 +10,4 @@ public record RobotOrderRequestStateChanged(
     OrderId OrderId,
     OrderUpdateId OrderUpdateId,
     OrderRequestStatus Status,
-    string? Message = null);
+    string? Message = null) : IRobotEvent;

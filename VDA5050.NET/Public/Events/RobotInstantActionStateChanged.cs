@@ -6,4 +6,4 @@ namespace VDA5050.NET.Public.Events;
 public record RobotInstantActionStateChanged(
     RobotSerialNumber RobotSerialNumber,
     ActionId ActionId,
-    ActionStatus Status);
+    ActionStatus Status) : IRobotEvent;

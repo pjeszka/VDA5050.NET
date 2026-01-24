@@ -39,4 +39,7 @@ public interface IVda5050Master
     // errors 
     Task<ICollection<ErrorSpecifics>?> GetRobotErrors(RobotSerialNumber robotSerialNumber);
     Task<ICollection<ErrorSpecifics>?> GetRobotErrorsFor(RobotSerialNumber robotSerialNumber, ErrorReferenceType errorReferenceType, string referenceId);
+    
+    // generics
+    void AddRobotEventHandler<T>(EventHandler<T> robotEventChangeHandler) where T : IRobotEvent;
 }

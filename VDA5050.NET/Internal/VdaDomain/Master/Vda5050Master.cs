@@ -132,10 +132,6 @@ internal sealed class Vda5050Master : IVda5050Master
         RobotStateChanged += robotStateChangedHandler;
     }
     
-    private event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
-    
-    private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
-    
     public void AddRobotPositionChangedHandler(EventHandler<RobotPositionChangedEvent> robotPositionChangedHandler)
     {
         RobotPositionChanged += robotPositionChangedHandler;
@@ -341,6 +337,41 @@ internal sealed class Vda5050Master : IVda5050Master
         return Task.FromResult<ICollection<ErrorSpecifics>?>(errors);
     }
 
+    public void AddRobotEventHandler<T>(EventHandler<T> robotEventChangeHandler) where T : IRobotEvent
+    {
+        if (robotEventChangeHandler is EventHandler<RobotConnectionStateChangedEvent> robotConnectionStateChangedEventHandler)
+        {
+            RobotConnectionStateChanged += robotConnectionStateChangedEventHandler;
+        }
+        
+        if (robotEventChangeHandler is EventHandler<RobotStateChangedEvent> robotStateChangedEventHandler)
+        {
+            RobotStateChanged += robotStateChangedEventHandler;
+        }
+        
+        if (robotEventChangeHandler is EventHandler<RobotPositionChangedEvent> robotPositionChangedEventHandler)
+        {
+            RobotPositionChanged += robotPositionChangedEventHandler;
+        }
+        
+        if (robotEventChangeHandler is EventHandler<RobotOrderStateChangedEvent> robotOrderStateChangedEventHandler)
+        {
+            RobotOrderStateChanged += robotOrderStateChangedEventHandler;
+        }
+        
+        if (robotEventChangeHandler is EventHandler<RobotOrderRequestStateChanged> robotOrderRequestStateChangedEventHandler)
+        {
+            RobotOrderRequestStateChanged += robotOrderRequestStateChangedEventHandler;
+        }
+        
+        if (robotEventChangeHandler is EventHandler<RobotInstantActionStateChanged> robotInstantActionStateChangedEventHandler)
+        {
+            RobotInstantActionStateChanged += robotInstantActionStateChangedEventHandler;
+        }
+    }
+    
+    private event EventHandler<RobotConnectionStateChangedEvent>? RobotConnectionStateChanged;
+    private event EventHandler<RobotStateChangedEvent>? RobotStateChanged;
     private event EventHandler<RobotPositionChangedEvent>? RobotPositionChanged;
     private event EventHandler<RobotOrderStateChangedEvent>? RobotOrderStateChanged;
     private event EventHandler<RobotOrderRequestStateChanged>? RobotOrderRequestStateChanged;
@@ -353,7 +384,7 @@ internal sealed class Vda5050Master : IVda5050Master
         // checking order requests
         _robotOrderRequestStateRepository.Clear();
         var waitingOrderRequestStates = _robotOrderRequestStateRepository
-            .GetAllForRobot(e.SerialNumber)
+            .GetAllForRobot(e.RobotSerialNumber)
             .Where(x => x.Status == OrderRequestStatus.Sent)
             .ToList();
  
@@ -365,7 +396,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 RobotOrderRequestStateChanged?.Invoke(
                     this,
                     new RobotOrderRequestStateChanged(
-                        e.SerialNumber,
+                        e.RobotSerialNumber,
                         waitingOrderRequestState.Id.OrderId,
                         waitingOrderRequestState.Id.OrderUpdateId,
                         OrderRequestStatus.Accepted));
@@ -380,7 +411,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 RobotOrderRequestStateChanged?.Invoke(
                     this,
                     new RobotOrderRequestStateChanged(
-                        e.SerialNumber,
+                        e.RobotSerialNumber,
                         waitingOrderRequestState.Id.OrderId,
                         waitingOrderRequestState.Id.OrderUpdateId,
                         OrderRequestStatus.Rejected,
@@ -395,7 +426,7 @@ internal sealed class Vda5050Master : IVda5050Master
         
         // checking instant actions
         _instantActionRequestRepository.Clear();
-        var instantActionRequestStates = _instantActionRequestRepository.GetAllForRobot(e.SerialNumber);
+        var instantActionRequestStates = _instantActionRequestRepository.GetAllForRobot(e.RobotSerialNumber);
         foreach(var instantActionRequestState in instantActionRequestStates)
         {
             var actionState = e.OrderState.ActionStates
@@ -405,7 +436,7 @@ internal sealed class Vda5050Master : IVda5050Master
                 _logger.LogWarning(
                     "Instant action {actionId} not found in order state for robot {serialNumber}",
                     instantActionRequestState.ActionId,
-                    e.SerialNumber);    
+                    e.RobotSerialNumber);    
             }
             else
             {
@@ -415,7 +446,7 @@ internal sealed class Vda5050Master : IVda5050Master
                     RobotInstantActionStateChanged?.Invoke(
                         this,
                         new RobotInstantActionStateChanged(
-                            e.SerialNumber,
+                            e.RobotSerialNumber,
                             instantActionRequestState.ActionId,
                             actionState.Status));
                 }
