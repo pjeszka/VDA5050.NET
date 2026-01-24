@@ -1,8 +1,6 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts.Order;
-using VDA5050.NET.Public.Models.InstantActions;
-using Action = VDA5050.NET.Public.Models.InstantActions.Action;
+﻿using Action = VDA5050.NET.Public.Models.InstantActions.Action;
 
-namespace VDA5050.NET.Public.Models.Orders;
+namespace VDA5050.NET.Public.Models.Orders.OrderRequesting;
 
 public sealed record Edge(
     string Id,

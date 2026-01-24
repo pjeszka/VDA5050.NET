@@ -1,4 +1,4 @@
-﻿namespace VDA5050.NET.Public.Models.Orders;
+﻿namespace VDA5050.NET.Public.Models.Orders.OrderRequesting;
 
 public sealed record RobotOrderRequest
 {

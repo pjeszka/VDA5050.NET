@@ -4,8 +4,13 @@ namespace VDA5050.NET.Public.Models;
 
 public sealed record Pose(double X, double Y, double Z, double Theta)
 {
-    internal static Pose FromMessage(AgvPositionMessage message)
+    internal static Pose? FromMessage(AgvPositionMessage? message)
     {
+        if (message is null)
+        {
+            return null;
+        }
+        
         return new Pose(message.X, message.Y, 0, message.Theta);
     }
 }

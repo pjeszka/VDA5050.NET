@@ -9,4 +9,13 @@ internal class BatteryStateMessage
 
     [JsonPropertyName("charging")]
     public bool Charging { get; set; }
+    
+    [JsonPropertyName("batteryVoltage")]
+    public double? BatteryVoltage { get; set; }
+    
+    [JsonPropertyName("batteryHealth")]
+    public int? BatteryHealth { get; set; }
+    
+    [JsonPropertyName("reach")]
+    public uint? Reach { get; set; }
 }

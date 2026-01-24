@@ -18,4 +18,13 @@ internal class AgvPositionMessage
 
     [JsonPropertyName("mapId")]
     public string? MapId { get; set; }
+    
+    [JsonPropertyName("mapDescription")]
+    public string? MapDescription { get; set; }
+    
+    [JsonPropertyName("localizationScore")]
+    public double? LocalizationScore { get; set; }
+    
+    [JsonPropertyName("deviationRange")]
+    public double? DeviationRange { get; set; }
 }

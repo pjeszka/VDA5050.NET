@@ -12,6 +12,7 @@ using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.Errors;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Models.Orders;
+using VDA5050.NET.Public.Models.Orders.OrderRequesting;
 using VDA5050.NET.Public.Models.Robots;
 using VDA5050.NET.Public.Services;
 using Action = VDA5050.NET.Public.Models.InstantActions.Action;

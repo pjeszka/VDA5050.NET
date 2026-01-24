@@ -125,7 +125,7 @@ internal sealed class OperationalRobot
         
         if (_isObsevingVisualization is false)
         {
-            Pose = Pose.FromMessage(stateMessage.AgvPositionMessage);
+            Pose = Pose.FromMessage(stateMessage.AgvPosition);
         }
         else if (Pose is null)
         {

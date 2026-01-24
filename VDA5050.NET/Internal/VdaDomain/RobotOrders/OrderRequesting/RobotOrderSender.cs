@@ -3,6 +3,7 @@ using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Models.Orders;
+using VDA5050.NET.Public.Models.Orders.OrderRequesting;
 using VDA5050.NET.Public.Services;
 
 namespace VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
