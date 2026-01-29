@@ -5,7 +5,7 @@ using VDA5050.NET.Public.Models;
 using VDA5050.NET.Public.Models.InstantActions;
 using VDA5050.NET.Public.Services;
 
-namespace VDA5050.NET.Internal.VdaDomain.InstantActions;
+namespace VDA5050.NET.Internal.VdaDomain.Master.InstantActions;
 
 internal sealed class RobotInstantActionsSender : IRobotInstantActionsSender
 {

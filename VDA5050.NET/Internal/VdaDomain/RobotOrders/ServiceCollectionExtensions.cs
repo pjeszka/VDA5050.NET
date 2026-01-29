@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using VDA5050.NET.Internal.VdaDomain.InstantActions;
+using VDA5050.NET.Internal.VdaDomain.Master.InstantActions;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 

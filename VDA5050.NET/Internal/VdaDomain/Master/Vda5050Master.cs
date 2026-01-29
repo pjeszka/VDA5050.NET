@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using VDA5050.NET.Internal.MQTT;
-using VDA5050.NET.Internal.VdaDomain.InstantActions;
+using VDA5050.NET.Internal.VdaDomain.Master.InstantActions;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;

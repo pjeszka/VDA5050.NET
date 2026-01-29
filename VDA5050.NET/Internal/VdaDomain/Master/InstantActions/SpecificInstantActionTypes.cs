@@ -1,4 +1,4 @@
-﻿namespace VDA5050.NET.Internal.VdaDomain.InstantActions;
+﻿namespace VDA5050.NET.Internal.VdaDomain.Master.InstantActions;
 
 public class SpecificInstantActionTypes
 {

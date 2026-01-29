@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VDA5050.NET.Internal.MQTT;
 using VDA5050.NET.Internal.MQTT.BackgroundServices;
 using VDA5050.NET.Internal.System;
+using VDA5050.NET.Internal.VdaDomain.Client;
 using VDA5050.NET.Internal.VdaDomain.Master;
 using VDA5050.NET.Internal.VdaDomain.RobotDiscovery;
 using VDA5050.NET.Internal.VdaDomain.RobotOrders;
@@ -20,7 +21,7 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration,
         ISystemClock? systemClock = null)
     {
-        ApplySettings(serviceCollection, configuration);
+        ApplyMasterSettings(serviceCollection, configuration);
 
         if (systemClock is not null)
         {
@@ -40,12 +41,48 @@ public static class ServiceCollectionExtensions
 
         return serviceCollection;
     }
+    
+    public static IServiceCollection AddVda5050Client(
+        this IServiceCollection serviceCollection,
+        IConfiguration configuration,
+        ISystemClock? systemClock = null)
+    {
+        ApplyClientSettings(serviceCollection, configuration);
 
-    private static void ApplySettings(IServiceCollection serviceCollection, IConfiguration configuration)
+        if (systemClock is not null)
+        {
+            serviceCollection.AddSingleton<ISystemClock>(systemClock);
+        }
+        else
+        {
+            serviceCollection.AddSingleton<ISystemClock, UtcSystemClock>();
+        }
+
+        serviceCollection
+            .AddMqtt()
+            .AddSingleton<IVda5050Client, Vda5050Client>();
+
+        return serviceCollection;
+    }
+
+    private static void ApplyMasterSettings(IServiceCollection serviceCollection, IConfiguration configuration)
     {
         var settings = new Vda5050MasterSettings();
 
         var section = configuration.GetSection(Vda5050MasterSettings.SectionName);
+        if (section.Exists())
+        {
+            section.Bind(settings);
+        }
+            
+        serviceCollection.AddSingleton(settings);
+    }
+    
+    private static void ApplyClientSettings(IServiceCollection serviceCollection, IConfiguration configuration)
+    {
+        var settings = new Vda5050ClientSettings();
+
+        var section = configuration.GetSection(Vda5050ClientSettings.SectionName);
         if (section.Exists())
         {
             section.Bind(settings);

@@ -42,4 +42,9 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Public\Models\Client\" />
+      <Folder Include="Public\Models\Master\" />
+    </ItemGroup>
+
 </Project>
