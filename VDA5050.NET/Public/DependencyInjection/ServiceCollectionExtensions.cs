@@ -11,6 +11,8 @@ using VDA5050.NET.Internal.VdaDomain.RobotOrders.OrderRequesting;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.DependencyInjection.Settings;
 using VDA5050.NET.Public.Services;
+using VDA5050.NET.Public.Services.Client;
+using VDA5050.NET.Public.Services.Master;
 
 namespace VDA5050.NET.Public.DependencyInjection;
 

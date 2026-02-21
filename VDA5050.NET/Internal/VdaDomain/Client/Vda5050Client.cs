@@ -1,4 +1,5 @@
 ﻿using VDA5050.NET.Public.Services;
+using VDA5050.NET.Public.Services.Client;
 
 namespace VDA5050.NET.Internal.VdaDomain.Client;
 

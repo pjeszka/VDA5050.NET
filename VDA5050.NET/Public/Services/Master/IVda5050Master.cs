@@ -7,7 +7,7 @@ using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Orders.OrderRequesting;
 using VDA5050.NET.Public.Models.Robots;
 
-namespace VDA5050.NET.Public.Services;
+namespace VDA5050.NET.Public.Services.Master;
 
 public interface IVda5050Master
 {

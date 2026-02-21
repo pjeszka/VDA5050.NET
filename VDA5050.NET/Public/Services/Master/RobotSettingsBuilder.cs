@@ -1,7 +1,6 @@
-﻿using VDA5050.NET.Internal.VdaDomain.Robots;
-using VDA5050.NET.Public.Models;
+﻿using VDA5050.NET.Public.Models;
 
-namespace VDA5050.NET.Public.Services;
+namespace VDA5050.NET.Public.Services.Master;
 
 public sealed class RobotSettingsBuilder
 {

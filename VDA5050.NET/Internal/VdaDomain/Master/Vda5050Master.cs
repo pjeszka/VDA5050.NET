@@ -15,6 +15,7 @@ using VDA5050.NET.Public.Models.Orders;
 using VDA5050.NET.Public.Models.Orders.OrderRequesting;
 using VDA5050.NET.Public.Models.Robots;
 using VDA5050.NET.Public.Services;
+using VDA5050.NET.Public.Services.Master;
 using Action = VDA5050.NET.Public.Models.InstantActions.Action;
 
 namespace VDA5050.NET.Internal.VdaDomain.Master;
