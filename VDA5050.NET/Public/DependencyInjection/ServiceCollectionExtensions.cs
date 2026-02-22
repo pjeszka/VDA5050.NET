@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
         }
 
         serviceCollection
-            .AddMqtt()
+            .AddMasterMqtt()
             .AddRobotDiscovery()
             .AddRobotManagement()
             .AddRobotOrders()
@@ -61,7 +61,7 @@ public static class ServiceCollectionExtensions
         }
 
         serviceCollection
-            .AddMqtt()
+            .AddMasterMqtt()
             .AddSingleton<IVda5050Client, Vda5050Client>();
 
         return serviceCollection;

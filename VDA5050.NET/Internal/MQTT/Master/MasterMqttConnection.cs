@@ -10,12 +10,12 @@ using VDA5050.NET.Public.Models.MQTT;
 
 namespace VDA5050.NET.Internal.MQTT;
 
-internal  sealed class MqttConnection : IMqttConnection
+internal sealed class MasterMqttConnection : IMqttConnection
 {
     private const string ClientId = "vda5050_master";
     private readonly IManagedMqttClient _client;
     private readonly ManagedMqttClientOptions _clientOptions;
-    private readonly ILogger<MqttConnection>? _logger;
+    private readonly ILogger<MasterMqttConnection>? _logger;
     private readonly List<string> _topics = new ();
     private readonly ICollection<string> _initialTopics;
     private readonly IMessageDispatcher _messageDispatcher;
@@ -25,11 +25,11 @@ internal  sealed class MqttConnection : IMqttConnection
     private string? _connectionFailedErrorMessage;
     private DateTime? _lastConnectedAt;
 
-    public MqttConnection(
+    public MasterMqttConnection(
         Vda5050MasterSettings masterSettings,
         IMessageDispatcher messageDispatcher,
         IInitialTopicsHandler initialTopicsHandler,
-        ILogger<MqttConnection>? logger = null)
+        ILogger<MasterMqttConnection>? logger = null)
     {
         _messageDispatcher = messageDispatcher;
         _initialTopicsHandler = initialTopicsHandler;

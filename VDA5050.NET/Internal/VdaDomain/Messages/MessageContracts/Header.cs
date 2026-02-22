@@ -28,4 +28,13 @@ internal abstract class Header
         Manufacturer = topicParts[2];
         SerialNumber = topicParts[3];
     }
+    
+    public void FillHeader(uint headerId, string manufacturer, string serialNumber, DateTime timeStamp)
+    {
+        HeaderId = headerId;
+        Timestamp = timeStamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+        Version = "2.1.0";
+        Manufacturer = manufacturer;
+        SerialNumber = serialNumber;
+    }
 }

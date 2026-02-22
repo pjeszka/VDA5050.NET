@@ -1,4 +1,5 @@
 ﻿using VDA5050.NET.Internal.MQTT;
+using VDA5050.NET.Internal.VdaDomain.Master.Robots;
 using VDA5050.NET.Internal.VdaDomain.Messages.MessageContracts;
 using VDA5050.NET.Internal.VdaDomain.Robots;
 using VDA5050.NET.Public.Models;
